@@ -1,0 +1,11 @@
+name = "cart-compare-api"
+main = "worker.js"
+compatibility_date = "2025-06-01"
+
+[vars]
+# Where your phone app is hosted (GitHub Pages URL). Kroger login redirects back here.
+APP_URL = "https://YOUR-GITHUB-USERNAME.github.io/claude/"
+# Origins allowed to call this API. Use your Pages origin; "*" allows any site.
+ALLOWED_ORIGINS = "https://YOUR-GITHUB-USERNAME.github.io"
+# "development" until Instacart approves your production key, then "production".
+INSTACART_ENV = "development"
