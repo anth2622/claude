@@ -1,0 +1,27 @@
+{
+  "_comment": "News feeds the collector reads. Add, remove or disable freely. requireInsurance=true drops items that never mention insurance (use it for general/business feeds).",
+  "feeds": [
+    { "name": "Insurance Journal", "url": "https://www.insurancejournal.com/rss/news/", "requireInsurance": false },
+    { "name": "Carrier Management", "url": "https://www.carriermanagement.com/feed/", "requireInsurance": false },
+    { "name": "Reinsurance News", "url": "https://www.reinsurancene.ws/feed/", "requireInsurance": false },
+    { "name": "Artemis", "url": "https://www.artemis.bm/feed/", "requireInsurance": false },
+    { "name": "Google News: insurance C-suite", "url": "https://news.google.com/rss/search?q=(insurer%20OR%20insurance%20OR%20reinsurer)%20(appoints%20OR%20names%20OR%20hires%20OR%20promotes)%20(CEO%20OR%20CFO%20OR%20COO%20OR%20%22chief%22%20OR%20president)%20when:7d&hl=en-US&gl=US&ceid=US:en", "requireInsurance": true },
+    { "name": "Google News: insurance VP / head of", "url": "https://news.google.com/rss/search?q=(insurance%20OR%20insurer%20OR%20broker%20OR%20MGA)%20(%22vice%20president%22%20OR%20%22head%20of%22%20OR%20%22managing%20director%22)%20(appointed%20OR%20joins%20OR%20named%20OR%20promoted)%20when:7d&hl=en-US&gl=US&ceid=US:en", "requireInsurance": true },
+    { "name": "Google News: insurance exec departures", "url": "https://news.google.com/rss/search?q=(insurer%20OR%20insurance%20OR%20reinsurer%20OR%20broker)%20(CEO%20OR%20CFO%20OR%20chief%20OR%20president)%20(%22steps%20down%22%20OR%20retire%20OR%20resigns%20OR%20departs%20OR%20exits)%20when:7d&hl=en-US&gl=US&ceid=US:en", "requireInsurance": true },
+    { "name": "Google News: Lloyd's & London market", "url": "https://news.google.com/rss/search?q=(Lloyd%27s%20OR%20syndicate%20OR%20MGA%20OR%20specialty%20insurer)%20(appoints%20OR%20hires%20OR%20names%20OR%20joins)%20when:7d&hl=en-GB&gl=GB&ceid=GB:en", "requireInsurance": true }
+  ],
+  "sec": {
+    "enabled": true,
+    "_comment": "SEC 8-K Item 5.02 (officer/director departures and appointments) from US-listed companies in these insurance SIC codes.",
+    "sicCodes": {
+      "6311": "Life & Annuity",
+      "6321": "Health",
+      "6324": "Health",
+      "6331": "P&C",
+      "6351": "Title / Surety",
+      "6361": "Title / Surety",
+      "6399": "P&C",
+      "6411": "Broker / Agency"
+    }
+  }
+}

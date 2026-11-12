@@ -1,19 +1,24 @@
-name: Deploy app to GitHub Pages
+name: Deploy apps to GitHub Pages
 
+# Publishes:
+#   /                    Cart Compare (app/)
+#   /insurance-moves/    Insurance Moves (insurance-moves/), with freshly collected data
 on:
   push:
-    branches: [main, claude/phone-app-0pwn1q]
-    paths: ['app/**', '.github/workflows/pages.yml']
+    branches: [main, claude/phone-app-0pwn1q, claude/tender-sagan-01fsm6]
+    paths: ['app/**', 'insurance-moves/**', '.github/workflows/pages.yml']
+  schedule:
+    - cron: '17 */6 * * *'   # collect insurance moves every 6 hours (runs on the default branch only)
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write   # to commit the collected moves back, so history builds up
   pages: write
   id-token: write
 
 concurrency:
   group: pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   deploy:
@@ -23,9 +28,39 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Test the insurance-moves collector
+        run: node --test insurance-moves/test/*.test.mjs
+
+      - name: Collect insurance management moves
+        continue-on-error: true   # a source being down should never block publishing
+        env:
+          SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT }}
+        run: node insurance-moves/collector/collect.mjs
+
+      - name: Save collected moves to the repo
+        if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add insurance-moves/data/moves.json
+          git diff --cached --quiet || (git commit -m "Update insurance moves data" && git push)
+
+      - name: Build site
+        run: |
+          mkdir -p _site
+          cp -r app/. _site/
+          mkdir -p _site/insurance-moves
+          cp -r insurance-moves/index.html insurance-moves/app.js insurance-moves/demo.js insurance-moves/styles.css \
+                insurance-moves/sw.js insurance-moves/manifest.webmanifest insurance-moves/lib insurance-moves/icons \
+                insurance-moves/data _site/insurance-moves/
+
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: app
+          path: _site
       - id: deployment
         uses: actions/deploy-pages@v4

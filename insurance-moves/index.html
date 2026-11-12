@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Insurance Moves</title>
+  <meta name="description" content="Track management-level appointments, promotions and departures across the insurance industry.">
+  <meta name="theme-color" content="#16325c">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Ins Moves">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="top">
+    <h1>Insurance Moves</h1>
+    <span id="updated" class="updated"></span>
+  </header>
+  <main id="view"></main>
+  <nav class="tabs" aria-label="Sections">
+    <button data-tab="feed"><span aria-hidden="true">📰</span>Moves</button>
+    <button data-tab="watch"><span aria-hidden="true">👁️</span>Watchlist<b id="watch-badge" class="badge" hidden></b></button>
+    <button data-tab="insights"><span aria-hidden="true">📊</span>Insights</button>
+    <button data-tab="add"><span aria-hidden="true">➕</span>Add</button>
+    <button data-tab="more"><span aria-hidden="true">⚙️</span>More</button>
+  </nav>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

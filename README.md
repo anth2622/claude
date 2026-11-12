@@ -7,8 +7,9 @@ stores, shows you the cheapest **single store** and the cheapest **mix-and-match
 **It never places an order.** Carts are created in each store, and you review and check out yourself.
 
 ```
-app/      the phone app (plain HTML/JS, no build step)
-worker/   small backend (Cloudflare Worker, free tier) that holds your API keys
+app/              the phone app (plain HTML/JS, no build step)
+worker/           small backend (Cloudflare Worker, free tier) that holds your API keys
+insurance-moves/  a second app: tracks management moves in the insurance industry (see insurance-moves/README.md)
 ```
 
 ## What each store can do
