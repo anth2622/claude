@@ -2,7 +2,7 @@ name: Deploy app to GitHub Pages
 
 on:
   push:
-    branches: [main, claude/phone-app-0pwn1q]
+    branches: [main, claude/phone-app-0pwn1q, claude/peaceful-gates-gp7swq]
     paths: ['app/**', '.github/workflows/pages.yml']
   workflow_dispatch:
 
