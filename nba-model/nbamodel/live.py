@@ -316,7 +316,25 @@ def write_reports(day: dt.date, preds: list[dict], picks_today: list[dict], inj_
                          f"{k['edge_pts']:+.1f} pts | {k['ev']:+.3f} |")
     else:
         lines.append("**No bets today.** Nothing cleared the edge threshold — passing is a position.")
-    lines += ["", "## All games", "",
+    lines += ["", "## Every game — model percentages", ""]
+    for r in preds:
+        h, a = r["home"], r["away"]
+        parts = [f"**{a} @ {h}**"]
+        sh = r.get("spread_home")
+        if sh is not None and r.get("p_home_cover") is not None:
+            ph = r["p_home_cover"]
+            fav_home = ph >= 0.5
+            parts.append("Spread: %s %+g **%.1f%%** / %s %+g %.1f%%" % (
+                (h, sh, 100 * ph, a, -sh, 100 * (1 - ph)) if fav_home else (a, -sh, 100 * (1 - ph), h, sh, 100 * ph)))
+        if r.get("total") is not None and r.get("p_over") is not None:
+            po = r["p_over"]
+            parts.append("Total %g: %s" % (r["total"], ("**Over %.1f%%** / Under %.1f%%" % (100 * po, 100 * (1 - po)))
+                                           if po >= 0.5 else ("**Under %.1f%%** / Over %.1f%%" % (100 * (1 - po), 100 * po))))
+        win = "%s by %.1f" % ((h, r["pred_margin"]) if r["pred_margin"] >= 0 else (a, -r["pred_margin"]))
+        parts.append(f"Model: {win}, total {r['pred_total']:.1f}")
+        lines.append("- " + " · ".join(parts))
+    lines += ["", "Break-even at -110 is 52.4%; a bet needs about 54.9%+ and 2+ pts of edge (3+ on totals).",
+              "", "## All games (detail)", "",
               "| Game | Line | Model spread | Total | Model total | Lineup adj (H/A) | P(home cover) | P(over) |",
               "|---|---|---|---|---|---|---|---|"]
     for r in preds:
