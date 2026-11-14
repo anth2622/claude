@@ -31,6 +31,7 @@ DEFAULT_PARAMS = {
     "player_prior_minutes": 400.0,
     "replacement_value": -2.5,  # pts/100 relative to average, for a replacement player
     "lineup_weight": 0.8,       # how much of the computed lineup delta to apply
+    "league_half_life_days": 7.0,  # >0: re-anchor league scoring level/pace to recent games
     "onoff_weight": 0.0,        # blend of shrunk on/off plus-minus into player value
     "onoff_prior_poss": 3000.0,
     "recent_games_for_minutes": 10,
@@ -106,6 +107,7 @@ class State:
     b2b_def: float = 0.0
     pace0: float = 0.0
     pace: dict = field(default_factory=dict)
+    total_shift: float = 0.0
     player_value: dict = field(default_factory=dict)       # athlete_id -> pts/100
     player_name: dict = field(default_factory=dict)
     player_team: dict = field(default_factory=dict)        # most recent team
@@ -162,6 +164,29 @@ def fit_state(games: list[dict], cutoff: dt.date, params: dict | None = None,
         st.off[t] = float(b[1 + i]); st.dfn[t] = float(b[1 + n + i])
         st.pace[t] = float(pb[1 + i])
     st.pace0 = float(pb[0])
+
+    # ---- league environment (scoring level, pace) drifts faster than team strength.
+    # Measure the model's recent in-sample total-points miss with a short half-life
+    # and correct predicted totals by it (applied in predict()).
+    lhl = P.get("league_half_life_days", 0.0)
+    st.total_shift = 0.0
+    if lhl:
+        wsum = miss = 0.0
+        for g in hist:
+            d = day_date(g["day"])
+            w = 0.5 ** ((cutoff - d).days / lhl)
+            if w < 1e-3:
+                continue
+            h, a = g["home"]["id"], g["away"]["id"]
+            hb2b, _ = rest_flags(st.team_days, h, d)
+            ab2b, _ = rest_flags(st.team_days, a, d)
+            hf = 0.0 if g.get("neutral") else 0.5
+            ph = st.mu + st.off[h] - st.dfn[a] + st.hca * hf + st.b2b_off * hb2b + st.b2b_def * ab2b
+            pa = st.mu + st.off[a] - st.dfn[h] - st.hca * hf + st.b2b_off * ab2b + st.b2b_def * hb2b
+            pt = (ph + pa) * (st.pace0 + st.pace[h] + st.pace[a]) / 100
+            wsum += w; miss += w * (g["home"]["score"] + g["away"]["score"] - pt)
+        if wsum:
+            st.total_shift = miss / wsum
 
     # ---- player values
     phl = P["player_half_life_days"]
@@ -298,10 +323,11 @@ def predict(st: State, home: str, away: str, day: dt.date, neutral: bool = False
     ppp_h = st.mu + off_h - def_a + st.hca * hfac + st.b2b_off * hb2b + st.b2b_def * ab2b + (adj["home"] - adj["away"]) / 2
     ppp_a = st.mu + off_a - def_h - st.hca * hfac + st.b2b_off * ab2b + st.b2b_def * hb2b + (adj["away"] - adj["home"]) / 2
     poss = st.pace0 + st.pace.get(home, 0) + st.pace.get(away, 0)
+    shift = getattr(st, "total_shift", 0.0)
     return {
         "margin": (ppp_h - ppp_a) * poss / 100,  # home minus away
-        "total": (ppp_h + ppp_a) * poss / 100,
-        "home_pts": ppp_h * poss / 100, "away_pts": ppp_a * poss / 100,
+        "total": (ppp_h + ppp_a) * poss / 100 + shift,
+        "home_pts": ppp_h * poss / 100 + shift / 2, "away_pts": ppp_a * poss / 100 + shift / 2,
         "poss": poss, "home_b2b": hb2b, "away_b2b": ab2b, "home_rest": hrest, "away_rest": arest,
         "lineup_adj_home": adj["home"], "lineup_adj_away": adj["away"],
         "absences": notes,

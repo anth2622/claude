@@ -23,8 +23,23 @@ from .store import DATA
 STATE_PATH = os.path.join(DATA, "model_state.json")
 
 
-def _logit_fit(x: np.ndarray, y: np.ndarray, w: np.ndarray, l2: float = 1.0) -> tuple[float, float]:
-    """Weighted logistic regression y ~ sigmoid(a*x + b), small ridge on both."""
+def _logit_fit(x: np.ndarray, y: np.ndarray, w: np.ndarray, l2: float = 1.0,
+               intercept: bool = False) -> tuple[float, float]:
+    """Weighted logistic regression y ~ sigmoid(a*x + b), small ridge.
+
+    No intercept by default: a historical over/home base rate is not a reason to lean
+    every game one way (it bakes in a side bias), so only the model's edge moves P."""
+    if not intercept:
+        a = 0.0
+        for _ in range(50):
+            p = 1 / (1 + np.exp(-a * x))
+            g = np.sum(w * (p - y) * x) + l2 * a
+            h = np.sum(w * p * (1 - p) * x * x) + l2
+            step = g / h
+            a -= step
+            if abs(step) < 1e-10:
+                break
+        return float(a), 0.0
     a = b = 0.0
     for _ in range(50):
         z = a * x + b
