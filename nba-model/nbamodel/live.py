@@ -321,11 +321,12 @@ def write_reports(day: dt.date, preds: list[dict], picks_today: list[dict], inj_
               "|---|---|---|---|---|---|---|---|"]
     for r in preds:
         sh = r.get("spread_home")
-        lines.append(f"| {r['away']} @ {r['home']} | {'' if sh is None else f'{r['home']} {sh:+g}'} | "
+        line_s = "" if sh is None else "%s %+g" % (r["home"], sh)
+        phc = "" if r.get("p_home_cover") is None else "%.1f%%" % (100 * r["p_home_cover"])
+        pov = "" if r.get("p_over") is None else "%.1f%%" % (100 * r["p_over"])
+        lines.append(f"| {r['away']} @ {r['home']} | {line_s} | "
                      f"{r['home']} {-r['pred_margin']:+.1f} | {r.get('total') or ''} | {r['pred_total']:.1f} | "
-                     f"{r['lineup_adj_home']:+.1f} / {r['lineup_adj_away']:+.1f} | "
-                     f"{'' if r.get('p_home_cover') is None else f'{100 * r['p_home_cover']:.1f}%'} | "
-                     f"{'' if r.get('p_over') is None else f'{100 * r['p_over']:.1f}%'} |")
+                     f"{r['lineup_adj_home']:+.1f} / {r['lineup_adj_away']:+.1f} | {phc} | {pov} |")
     absn = [(r, side, n) for r in preds for side in ("home", "away") for n in r["_pr"]["absences"][side]]
     if absn:
         lines += ["", "## Key absences priced in", ""]
