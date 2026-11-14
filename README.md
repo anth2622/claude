@@ -80,3 +80,27 @@ Shopify doesn't give out tokens for other people's stores.
 - Quantities: "3 cans beans" buys 3. "2 lb chicken" buys 1 package. Adjust with the +/− buttons.
 
 Your settings and tokens are stored only on your phone (browser local storage).
+
+---
+
+# Buzzer Beater: sports trivia (`app/sports-trivia/`)
+
+A game-show style sports trivia board with today's stars (NFL, NBA, MLB, NHL, soccer, tennis,
+golf, WNBA, Olympics). Answer out loud: the app reads each clue and listens for your answer.
+
+- **Play solo or pass-and-play with up to 4 people.** With 2+ players, tap your name to buzz in.
+- **Board:** 6 random categories × 5 clues, a Double round, hidden Daily Doubles, and a Final round with wagers.
+  Categories and clues are reshuffled every game.
+- **Voice:** tap the mic (or leave "Start listening automatically" on) and say "Who is Patrick Mahomes?" or
+  just "Mahomes". The checker accepts last names and common mishearings. If it gets one wrong, tap **I was right, count it**.
+- **Typing works too**, for browsers without voice support.
+
+**Install it:** once GitHub Pages is on (see step 1 above) it's at
+`https://<your-username>.github.io/claude/sports-trivia/`. Open it on your phone and use
+**Add to Home Screen** (iPhone, Safari) or **Install app** (Android, Chrome). Send that same link to friends.
+
+**Voice support:** Chrome on Android and Safari on iPhone support voice answers. On iPhone, voice works
+best in Safari itself; if it doesn't work from the home-screen icon, tap the mic on your keyboard to dictate.
+
+**Add or update clues:** edit `app/sports-trivia/clues.js`. Each category needs at least one clue at each level 1-5.
+Facts are current through the 2025 seasons.
