@@ -29,8 +29,9 @@ PICK_FIELDS = ["day", "id", "matchup", "market", "side", "line", "odds", "prob",
 
 # Decision policy. The daily review may adjust these (and must log why in CHANGELOG.md).
 DEFAULT_POLICY = {
-    "min_prob_edge": 0.025,     # model prob must exceed break-even by this much
-    "min_edge_pts_spread": 2.0,  # and disagree with the line by at least this many points
+    "min_prob": 0.525,          # model prob must be at least this (user-set 2026-11-15)
+    "min_prob_edge": 0.0,       # ...and exceed the price's break-even by this much
+    "min_edge_pts_spread": 3.0,  # and disagree with the line by at least this many points
     "min_edge_pts_total": 3.0,
     "max_picks_per_day": 4,
     "markets": ["spread", "total"],
@@ -259,7 +260,8 @@ def _cand(row, matchup, market, side, line, odds, p, edge, pol):
     dec = store.american_to_decimal(odds)
     ev = p * (dec - 1) - (1 - p)
     min_pts = pol["min_edge_pts_spread"] if market == "spread" else pol["min_edge_pts_total"]
-    ok = market in pol["markets"] and p - be >= pol["min_prob_edge"] and edge >= min_pts
+    ok = (market in pol["markets"] and p >= pol.get("min_prob", 0) and p - be >= pol["min_prob_edge"]
+          and p > be and edge >= min_pts)
     return {"day": row["day"], "id": row["id"], "matchup": matchup, "market": market, "side": side,
             "line": line, "odds": int(odds), "prob": round(p, 4), "edge_pts": round(edge, 1),
             "ev": round(ev, 4), "stake": pol["stake_units"], "result": "pending", "profit": "",
@@ -333,7 +335,7 @@ def write_reports(day: dt.date, preds: list[dict], picks_today: list[dict], inj_
         win = "%s by %.1f" % ((h, r["pred_margin"]) if r["pred_margin"] >= 0 else (a, -r["pred_margin"]))
         parts.append(f"Model: {win}, total {r['pred_total']:.1f}")
         lines.append("- " + " · ".join(parts))
-    lines += ["", "Break-even at -110 is 52.4%; a bet needs about 54.9%+ and 2+ pts of edge (3+ on totals).",
+    lines += ["", "Break-even at -110 is 52.4%; an official bet needs 52.5%+ (and above the price's break-even) and 3+ pts of edge.",
               "", "## All games (detail)", "",
               "| Game | Line | Model spread | Total | Model total | Lineup adj (H/A) | P(home cover) | P(over) |",
               "|---|---|---|---|---|---|---|---|"]

@@ -15,7 +15,7 @@ with a running record.
 | Own power numbers | Possession-based offensive, defensive and pace ratings from a recency-weighted ridge regression (75-day half-life) over every game since Oct 2024. Home court and back-to-back effects are fitted, not assumed. |
 | Price injuries before the market | Every player gets a value (box-score regression, shrunk toward replacement). Tonight's expected roster from ESPN's injury report is compared with the roster the team's rating was earned with. The difference moves the number. |
 | Respect the market | The model never bets its raw number. A logistic calibration fitted on walk-forward history shrinks its disagreement with the line into an honest cover probability. |
-| Only bet real edges | A bet needs the cover probability ≥ break-even + 2.5 points (≈54.9% at −110) **and** ≥2 points of spread disagreement (3 for totals). Max 4 bets a day; most days have 0–2. |
+| Only bet real edges | An official bet needs a calibrated probability ≥ 52.5% (and above the price's break-even) **and** ≥3 points of disagreement with the line. Max 4 bets a day. Every game's probabilities are shown daily regardless. |
 | Track closing-line value | Every pick records the line we got vs the closing line. Positive CLV is the earliest reliable sign of a real edge. |
 | Learn from results | Every game's morning-line prediction is graded and fed back into the calibration with 3× the weight of backtest rows, so the model's trust in itself tracks live performance. |
 

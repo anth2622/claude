@@ -12,3 +12,8 @@
 - **Fix 1:** predicted totals are re-anchored to the league's recent scoring with a 7-day half-life (`league_half_life_days`). Grid over 7/10/14/21/35 days; 7 was best. Totals MAE 14.87 → 14.80; Nov over-lean 78% → 51% of games; monthly drift SD 3.8 → 2.6.
 - **Fix 2:** calibration has no intercept. The old fit added a constant +0.029 logit toward overs (and +0.010 toward home) to every game, from historical base rates.
 - **Check:** over picks and under picks now hit at similar rates (vs open, |edge| ≥ 3: overs 53.2% on n=746, unders 54.7% on n=517). Spread side split shows no margin bias (−0.01 pts).
+
+## 2026-11-15 — policy: bet threshold lowered to 52.5% (user decision)
+- The old bar (break-even + 2.5% ≈ 54.9%) needed ~12 pts of disagreement at the current calibration slope, so it would almost never bet.
+- New: probability ≥ 52.5% and above the price's break-even, plus ≥3 pts of edge for both spreads and totals.
+- Backtest at this rule (calibration in-sample, so optimistic): spreads 220 bets, 55.0% vs open / 54.4% vs close; totals 886 bets, 53.6% vs open / 50.3% vs close. Expect about 2–3 bets a day, mostly totals. Totals are the weaker market: drop them if live CLV is negative over 150+ picks.
