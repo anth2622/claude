@@ -4,6 +4,7 @@ from __future__ import annotations
 import csv
 import datetime as dt
 import json
+import math
 import os
 import re
 from zoneinfo import ZoneInfo
@@ -15,6 +16,7 @@ from .store import DATA, ROOT, _line
 
 ET = ZoneInfo("America/New_York")
 PRED_PATH = os.path.join(DATA, "predictions.csv")
+WIN_SD = 13.5  # margin SD for win probability; checked for calibration on the walk-forward backtest
 PICKS_PATH = os.path.join(DATA, "picks.csv")
 REPORT_PATH = os.path.join(ROOT, "REPORT.md")
 REPORTS_DIR = os.path.join(ROOT, "reports")
@@ -333,6 +335,8 @@ def write_reports(day: dt.date, preds: list[dict], picks_today: list[dict], inj_
             parts.append("Total %g: %s" % (r["total"], ("**Over %.1f%%** / Under %.1f%%" % (100 * po, 100 * (1 - po)))
                                            if po >= 0.5 else ("**Under %.1f%%** / Over %.1f%%" % (100 * (1 - po), 100 * po))))
         win = "%s by %.1f" % ((h, r["pred_margin"]) if r["pred_margin"] >= 0 else (a, -r["pred_margin"]))
+        pw = 0.5 * (1 + math.erf(r["pred_margin"] / WIN_SD / math.sqrt(2)))  # P(home wins)
+        parts.append("Win: %s %.0f%% / %s %.0f%%" % ((h, 100 * pw, a, 100 - 100 * pw) if pw >= 0.5 else (a, 100 - 100 * pw, h, 100 * pw)))
         parts.append(f"Model: {win}, total {r['pred_total']:.1f}")
         lines.append("- " + " · ".join(parts))
     lines += ["", "Break-even at -110 is 52.4%; an official bet needs 52.5%+ (and above the price's break-even) and 3+ pts of edge.",
