@@ -22,6 +22,7 @@ from .store import PLAYER_FIELDS
 
 PF = {f: i + 4 for i, f in enumerate(PLAYER_FIELDS)}  # index into a player row
 BOX_FEATS = ["pts", "fga", "fta", "fg3a", "oreb", "dreb", "ast", "stl", "blk", "tov", "pf"]
+OFF_MASK = np.array([f in ("pts", "fga", "fta", "fg3a", "oreb", "ast", "tov") for f in BOX_FEATS])
 
 DEFAULT_PARAMS = {
     "half_life_days": 75.0,     # recency weighting for team ratings
@@ -32,6 +33,9 @@ DEFAULT_PARAMS = {
     "replacement_value": -2.5,  # pts/100 relative to average, for a replacement player
     "lineup_weight": 0.8,       # how much of the computed lineup delta to apply
     "league_half_life_days": 7.0,  # >0: re-anchor league scoring level/pace to recent games
+    "lineup_affects_totals": False,  # off/def split: tested 2026-11-16, made totals worse
+    "scoring_loss_weight": 0.2,      # total -= w * (team scoring lost to absences), see predict()
+    "replacement_ppm": 0.40,         # points per minute of a replacement player  # split player value into offense/defense so absences move totals
     "onoff_weight": 0.0,        # blend of shrunk on/off plus-minus into player value
     "onoff_prior_poss": 3000.0,
     "recent_games_for_minutes": 10,
@@ -115,6 +119,10 @@ class State:
     player_last: dict = field(default_factory=dict)        # last date played
     team_recent_players: dict = field(default_factory=dict)  # team -> set of athletes in last N games
     team_baseline: dict = field(default_factory=dict)      # weighted avg roster strength
+    player_value_off: dict = field(default_factory=dict)   # offensive part of player_value
+    team_baseline_off: dict = field(default_factory=dict)
+    player_ppm: dict = field(default_factory=dict)          # points per minute (shrunk)
+    team_baseline_pts: dict = field(default_factory=dict)   # weighted avg lineup scoring
     team_days: dict = field(default_factory=dict)
     params: dict = field(default_factory=dict)
 
@@ -223,8 +231,12 @@ def fit_state(games: list[dict], cutoff: dt.date, params: dict | None = None,
             by_team_games.setdefault(g[side]["id"], []).append(g)
     prior_m, repl = P["player_prior_minutes"], P["replacement_value"]
     for aid, s in agg.items():
-        raw = box_coefs[0] / 5 + float(box_coefs[1:] @ (s * 100 / max(pposs[aid], 1e-6)))
+        rates = s * 100 / max(pposs[aid], 1e-6)
+        raw = box_coefs[0] / 5 + float(box_coefs[1:] @ rates)
+        raw_off = box_coefs[0] / 10 + float(box_coefs[1:][OFF_MASK] @ rates[OFF_MASK])
         v = (raw * pmin[aid] + repl * prior_m) / (pmin[aid] + prior_m)
+        st.player_value_off[aid] = (raw_off * pmin[aid] + repl / 2 * prior_m) / (pmin[aid] + prior_m)
+        st.player_ppm[aid] = (s[0] + P["replacement_ppm"] * 200) / (pmin[aid] + 200)
         on_pm, on_poss, off_pm, off_poss = onoff[aid]
         if P["onoff_weight"] and on_poss > 0 and off_poss > 0:
             oo = 100 * on_pm / on_poss - 100 * off_pm / off_poss
@@ -246,21 +258,39 @@ def fit_state(games: list[dict], cutoff: dt.date, params: dict | None = None,
             if st.player_team.get(aid) == t:
                 st.player_minutes[aid] = float(np.mean(ms))
         # baseline = rating-weighted average roster strength over the window
-        num = den = 0.0
+        num = num_off = num_pts = 0.0
+        den = 0.0
         for g in tg:
             w = 0.5 ** ((cutoff - day_date(g["day"])).days / hl)
-            num += w * roster_strength(st, [(p[1], p[PF["min"]]) for p in g["players"] if p[0] == t])
+            lu = [(p[1], p[PF["min"]]) for p in g["players"] if p[0] == t]
+            num += w * roster_strength(st, lu)
+            num_off += w * roster_strength(st, lu, "off")
+            num_pts += w * lineup_points(st, lu)
             den += w
         st.team_baseline[t] = num / den if den else 0.0
+        st.team_baseline_off[t] = num_off / den if den else 0.0
+        st.team_baseline_pts[t] = num_pts / den if den else 0.0
     return st
 
 
-def roster_strength(st: State, lineup: list[tuple[str, float]]) -> float:
-    """Net pts/100 implied by (athlete, minutes) pairs; missing minutes at replacement."""
-    repl = st.params["replacement_value"]
+def lineup_points(st: State, lineup: list[tuple[str, float]]) -> float:
+    """Points a lineup's scorers would produce over 240 minutes at their usual rates."""
+    rp = st.params["replacement_ppm"]
     tot_min = sum(m for _, m in lineup)
     scale = 240 / tot_min if tot_min > 240 else 1.0
-    s = sum(st.player_value.get(a, repl) * m * scale for a, m in lineup) / 48
+    return sum(st.player_ppm.get(a, rp) * m * scale for a, m in lineup) + rp * max(0.0, 240 - tot_min)
+
+
+def roster_strength(st: State, lineup: list[tuple[str, float]], part: str = "net") -> float:
+    """Net (or offensive-only) pts/100 implied by (athlete, minutes) pairs; missing
+    minutes at replacement."""
+    repl = st.params["replacement_value"]
+    vals = st.player_value
+    if part == "off":
+        repl, vals = repl / 2, st.player_value_off
+    tot_min = sum(m for _, m in lineup)
+    scale = 240 / tot_min if tot_min > 240 else 1.0
+    s = sum(vals.get(a, repl) * m * scale for a, m in lineup) / 48
     s += repl * max(0.0, 240 - tot_min) / 48
     return s
 
@@ -312,21 +342,33 @@ def predict(st: State, home: str, away: str, day: dt.date, neutral: bool = False
     ab2b, arest = rest_flags(st.team_days, away, day)
     hfac = 0.0 if neutral else 0.5
     lw = st.params["lineup_weight"]
-    adj = {}
-    notes = {}
+    adj, adj_off, pts_delta, notes = {}, {}, {}, {}
     for side, t, act in (("home", home, actual_home), ("away", away, actual_away)):
         lu, nt = expected_lineup(st, t, day, statuses, act)
         adj[side] = lw * (roster_strength(st, lu) - st.team_baseline.get(t, 0.0)) if lu else 0.0
+        adj_off[side] = lw * (roster_strength(st, lu, "off") - st.team_baseline_off.get(t, 0.0)) if lu else 0.0
+        pts_delta[side] = (lineup_points(st, lu) - st.team_baseline_pts.get(t, 0.0)) if lu else 0.0
         notes[side] = nt
+    if st.params.get("lineup_affects_totals"):
+        # offense part moves own scoring, defense part moves opponent's: margin is
+        # unchanged vs. the symmetric split, but missing scorers now lower the total.
+        adj_def = {k: adj[k] - adj_off[k] for k in adj}
+        lh = adj_off["home"] - adj_def["away"]
+        la = adj_off["away"] - adj_def["home"]
+    else:
+        lh = (adj["home"] - adj["away"]) / 2
+        la = (adj["away"] - adj["home"]) / 2
     off_h, off_a = st.off.get(home, 0), st.off.get(away, 0)
     def_h, def_a = st.dfn.get(home, 0), st.dfn.get(away, 0)
-    ppp_h = st.mu + off_h - def_a + st.hca * hfac + st.b2b_off * hb2b + st.b2b_def * ab2b + (adj["home"] - adj["away"]) / 2
-    ppp_a = st.mu + off_a - def_h - st.hca * hfac + st.b2b_off * ab2b + st.b2b_def * hb2b + (adj["away"] - adj["home"]) / 2
+    ppp_h = st.mu + off_h - def_a + st.hca * hfac + st.b2b_off * hb2b + st.b2b_def * ab2b + lh
+    ppp_a = st.mu + off_a - def_h - st.hca * hfac + st.b2b_off * ab2b + st.b2b_def * hb2b + la
     poss = st.pace0 + st.pace.get(home, 0) + st.pace.get(away, 0)
     shift = getattr(st, "total_shift", 0.0)
     return {
         "margin": (ppp_h - ppp_a) * poss / 100,  # home minus away
-        "total": (ppp_h + ppp_a) * poss / 100 + shift,
+        "total": (ppp_h + ppp_a) * poss / 100 + shift
+                 + st.params.get("scoring_loss_weight", 0.0) * (pts_delta["home"] + pts_delta["away"]),
+        "scoring_delta": pts_delta["home"] + pts_delta["away"],
         "home_pts": ppp_h * poss / 100 + shift / 2, "away_pts": ppp_a * poss / 100 + shift / 2,
         "poss": poss, "home_b2b": hb2b, "away_b2b": ab2b, "home_rest": hrest, "away_rest": arest,
         "lineup_adj_home": adj["home"], "lineup_adj_away": adj["away"],

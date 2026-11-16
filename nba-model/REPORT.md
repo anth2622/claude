@@ -13,3 +13,5 @@ CLV = points of closing-line value (positive means we beat the close). It is the
 
 | Date | Game | Pick | Odds | Prob | Result | Units | Close | CLV |
 |---|---|---|---|---|---|---|---|---|
+| 2026-11-16 | MEM @ WSH | OVER 230.5 | -110 | 53.4% | pending |  |  |  |
+| 2026-11-16 | GS @ NO | OVER 225.5 | -110 | 54.8% | pending |  |  |  |

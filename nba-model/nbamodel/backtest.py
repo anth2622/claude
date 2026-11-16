@@ -12,7 +12,7 @@ from .store import DATA
 BT_PATH = os.path.join(DATA, "backtest.csv")
 BT_FIELDS = ["day", "id", "season", "home", "away", "home_score", "away_score",
              "pred_margin", "pred_total", "lineup_adj_home", "lineup_adj_away",
-             "open_spread_home", "close_spread_home", "open_total", "close_total"]
+             "open_spread_home", "close_spread_home", "open_total", "close_total", "scoring_delta"]
 
 
 def run(games: list[dict], start: dt.date, end: dt.date, params: dict | None = None,
@@ -48,6 +48,7 @@ def run(games: list[dict], start: dt.date, end: dt.date, params: dict | None = N
                 "lineup_adj_home": round(pr["lineup_adj_home"], 2), "lineup_adj_away": round(pr["lineup_adj_away"], 2),
                 "open_spread_home": op.get("spread_home"), "close_spread_home": cl.get("spread_home"),
                 "open_total": op.get("total"), "close_total": cl.get("total"),
+                "scoring_delta": round(pr.get("scoring_delta", 0.0), 2),
             })
         if log and i % 30 == 0:
             log(f"  backtest {day}: {len(rows)} games")

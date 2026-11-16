@@ -17,3 +17,9 @@
 - The old bar (break-even + 2.5% ≈ 54.9%) needed ~12 pts of disagreement at the current calibration slope, so it would almost never bet.
 - New: probability ≥ 52.5% and above the price's break-even, plus ≥3 pts of edge for both spreads and totals.
 - Backtest at this rule (calibration in-sample, so optimistic): spreads 220 bets, 55.0% vs open / 54.4% vs close; totals 886 bets, 53.6% vs open / 50.3% vs close. Expect about 2–3 bets a day, mostly totals. Totals are the weaker market: drop them if live CLV is negative over 150+ picks.
+
+## 2026-11-16 — v1.2: injuries now move totals, not just spreads
+- **Problem:** lineup adjustments were net-only (symmetric), so a missing scorer moved the spread but never the total. The market lowers totals when scorers sit, so the model saw fake over edges. Today all 3 official picks were overs in games with key scorers out (Curry, Murphy/Murray/Mathurin, Banchero).
+- **Tried:** splitting box values into offense/defense parts. Totals MAE got worse (14.800 → 14.833 with real lineups) and the over-lean grew (59% → 70% of edges), so it's off (`lineup_affects_totals: false`).
+- **Adopted:** each player's points per minute; tonight's lineup's expected scoring minus the team's usual lineup scoring, times `scoring_loss_weight`. Fitted with real lineups: the weight is 0.18 vs actual totals and 0.22 vs closing lines; set to 0.2. MAE vs closing totals 3.90 → 3.56, MAE vs actual totals unchanged (14.800 → 14.797).
+- **Effect today:** GS @ NO model total 236.2 → 234.5; ORL @ BOS over dropped out of the picks.
