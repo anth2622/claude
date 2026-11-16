@@ -23,3 +23,9 @@
 - **Tried:** splitting box values into offense/defense parts. Totals MAE got worse (14.800 → 14.833 with real lineups) and the over-lean grew (59% → 70% of edges), so it's off (`lineup_affects_totals: false`).
 - **Adopted:** each player's points per minute; tonight's lineup's expected scoring minus the team's usual lineup scoring, times `scoring_loss_weight`. Fitted with real lineups: the weight is 0.18 vs actual totals and 0.22 vs closing lines; set to 0.2. MAE vs closing totals 3.90 → 3.56, MAE vs actual totals unchanged (14.800 → 14.797).
 - **Effect today:** GS @ NO model total 236.2 → 234.5; ORL @ BOS over dropped out of the picks.
+
+## 2026-11-16 — bias review (no change; user chose to keep policy and monitor)
+- 7 of 8 games leaned over today (+3.6 pts vs line on average; the usual is +0.7). The league re-anchor contributed only +0.2. The last 7 days went over the close 61% of the time (+4.8 pts/game), which feeds team ratings.
+- Backtest side split vs open, |edge| ≥ 3: overs 52.1% (n=658), unders 54.1% (n=569). Out-of-sample 52.5%-rule bets: overs 51.2% (n=168), unders 62.8% (n=113). Home spread picks 53.7% vs away 50.9%.
+- Tried side-specific calibration (overfit: flipped direction between seasons) and market-anchoring the average total (removed the average lean, but overs still ~51–52%). Neither adopted.
+- Proposed unders-only for official totals; the user declined for now. `review` now prints an over/under and home/away split of live leans, official results and CLV every day, to keep evaluating.
