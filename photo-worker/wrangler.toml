@@ -1,0 +1,12 @@
+name = "magic-photos-api"
+main = "worker.js"
+compatibility_date = "2025-06-01"
+
+[vars]
+# Origins allowed to call this API: your GitHub Pages origin (no path).
+ALLOWED_ORIGINS = "https://YOUR-GITHUB-USERNAME.github.io"
+# Gemini model that edits the photo. If edits fail with "model not found", open
+# the app's Grown-ups settings and tap "Check setup" to see valid names.
+IMAGE_MODEL = "gemini-3.1-flash-image"
+# Gemini model that runs the kid-safety checks (needs to understand images).
+CHECK_MODEL = "gemini-flash-latest"

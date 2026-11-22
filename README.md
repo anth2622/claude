@@ -104,3 +104,55 @@ best in Safari itself; if it doesn't work from the home-screen icon, tap the mic
 
 **Add or update clues:** edit `app/sports-trivia/clues.js`. Each category needs at least one clue at each level 1-5.
 Facts are current through the 2025 seasons.
+
+---
+
+# Magic Photos: AI photo editing for kids (`app/magic-photos/` + `photo-worker/`)
+
+An iPad app that does exactly one thing: your kid picks a photo, types what to change
+("put a crown on the dog", "make it snow"), and Gemini edits it. There is no chat and no other
+features. It can only edit photos.
+
+**Kid safety.** Every edit has to pass four checks, and if any check fails or errors, the edit is blocked:
+1. A word list catches obvious no-gos (weapons, gore, nudity, drugs, swearing, insults).
+2. Gemini checks the typed request **and the starting photo** against strict rules for ages 5-12. It
+   blocks anything mature, scary or violent, mean edits that make a real person look bad, and
+   attempts to trick the checker.
+3. The edit runs with Gemini's own safety filters at their strictest setting.
+4. Gemini checks the **finished picture** again before your kid sees it.
+
+When something is blocked, your kid sees a kind message with a fun alternative idea.
+No filter is perfect, so do a few test edits yourself first.
+
+**Privacy.** Photos go from the iPad to your backend, then to Google's Gemini API, and are not stored by this app.
+On Gemini's free tier, Google may use what you send to improve its products. On a paid
+(billing-enabled) key it doesn't. See <https://ai.google.dev/gemini-api/terms>.
+
+## Setup (about 20 minutes, needs a computer with Node.js)
+
+1. **App hosting:** turn on GitHub Pages (Settings → Pages → Source: GitHub Actions, see step 1 above).
+   The app will be at `https://<your-username>.github.io/claude/magic-photos/`.
+2. **Gemini key:** create one at <https://aistudio.google.com/apikey>. In Google Cloud billing, set a
+   **budget alert** so you're never surprised. Each edit costs a few cents.
+3. **Backend** (free Cloudflare account):
+   ```bash
+   cd photo-worker
+   # edit wrangler.toml: set ALLOWED_ORIGINS to https://<your-username>.github.io
+   npx wrangler login
+   npx wrangler secret put GEMINI_API_KEY
+   npx wrangler secret put APP_KEY        # make up a family password; kids shouldn't know it
+   npx wrangler deploy
+   ```
+   It prints a URL like `https://magic-photos-api.<you>.workers.dev`.
+4. **On each iPad:** open the app link in Safari → Share → **Add to Home Screen**. Open it from the
+   home screen, enter the backend URL and family password, and tap **Check setup**. If a model
+   shows ❌, put one of the listed names in `wrangler.toml` and run `npx wrangler deploy` again.
+   Google renames its models now and then.
+5. **Lock it down (optional):** Settings → Accessibility → **Guided Access** keeps the iPad in this one
+   app until you triple-click and enter your passcode.
+
+The grown-ups settings sit behind the faint ⚙︎ in the corner and need the family password.
+
+**Using it:** tap **Pick a photo** (from Photos or the camera), type an idea or tap a suggestion, then tap
+**Make magic!** Keep typing ideas to keep changing the same picture. **Undo** steps back, holding
+**Hold to see before** shows the original, and **Save** opens the share sheet → **Save Image**.

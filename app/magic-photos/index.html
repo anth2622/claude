@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Magic Photos</title>
+  <meta name="description" content="Change your photos with magic. Pick a photo, say what to change.">
+  <meta name="theme-color" content="#5b2bbf">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Magic Photos">
+  <meta name="robots" content="noindex">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="top">
+    <h1>Magic Photos <span aria-hidden="true">✨</span></h1>
+    <button id="grownups" class="grownups" aria-label="Grown-up settings">⚙︎</button>
+  </header>
+
+  <main id="app">
+    <!-- Step 1: pick a photo -->
+    <section id="pick" class="screen">
+      <label class="big-pick">
+        <input id="file" type="file" accept="image/*" hidden>
+        <span class="emoji" aria-hidden="true">📷</span>
+        <span>Pick a photo</span>
+      </label>
+      <p class="hint">Choose one from your photos, or take a new one.</p>
+    </section>
+
+    <!-- Step 2: say what to change -->
+    <section id="editor" class="screen" hidden>
+      <div class="photo-wrap">
+        <img id="photo" alt="Your photo">
+        <div id="working" class="working" hidden>
+          <div class="sparkles" aria-hidden="true">✨🪄✨</div>
+          <p id="working-msg">Mixing the magic…</p>
+        </div>
+      </div>
+
+      <div id="message" class="message" role="status" aria-live="polite" hidden></div>
+
+      <div id="ask" class="ask">
+        <label for="prompt" class="ask-label">What should the magic do?</label>
+        <textarea id="prompt" rows="2" maxlength="300" placeholder="Like: put a crown on the dog" autocomplete="off" autocapitalize="sentences"></textarea>
+        <div class="ideas" id="ideas"></div>
+        <button id="go" class="go">✨ Make magic!</button>
+      </div>
+
+      <div class="actions">
+        <button id="compare" class="small" hidden>👀 Hold to see before</button>
+        <button id="undo" class="small" hidden>↩️ Undo</button>
+        <button id="save" class="small" hidden>💾 Save</button>
+        <button id="newphoto" class="small">📷 New photo</button>
+      </div>
+    </section>
+
+    <!-- Grown-up settings -->
+    <section id="settings" class="screen" hidden>
+      <h2>Grown-up settings</h2>
+      <label>Backend URL
+        <input id="backend" type="url" inputmode="url" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="https://magic-photos-api.you.workers.dev">
+      </label>
+      <label>Family password
+        <input id="password" type="password" autocomplete="off">
+      </label>
+      <div class="row">
+        <button id="save-settings" class="go">Save</button>
+        <button id="check" class="small">Check setup</button>
+      </div>
+      <pre id="check-out" class="check-out" hidden></pre>
+      <button id="close-settings" class="small" hidden>Back to the magic</button>
+    </section>
+  </main>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
