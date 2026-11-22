@@ -1,0 +1,21 @@
+QB_0,RB_1,RB_2,WR_3,WR_4,WR_5,TE_6,FLEX_7,DST_8,mean,win%,top1%,cash%,roi%,roi_se,salary,own_sum,exp_dupes
+Dak Prescott,James Cook III,Tony Pollard,CeeDee Lamb,George Pickens,Elic Ayomanor,Gunnar Helm,Tommy Tremble,Steelers,125.6919,0.0062,0.0325,0.2732,108.1475,3.3733,49900.0,218.4,0.0001
+Dak Prescott,James Cook III,D'Andre Swift,CeeDee Lamb,George Pickens,Elic Ayomanor,Gunnar Helm,Elijah Higgins,Steelers,125.9844,0.0056,0.0324,0.28,104.961,3.26,50000.0,216.3333,0.0001
+Dak Prescott,James Cook III,Bucky Irving,CeeDee Lamb,George Pickens,Elic Ayomanor,Greg Dulcich,Elijah Higgins,Steelers,127.5805,0.0056,0.0312,0.2924,104.8376,3.2443,50000.0,236.5667,0.0002
+Dak Prescott,James Cook III,Tony Pollard,CeeDee Lamb,George Pickens,Elic Ayomanor,Gunnar Helm,Elijah Higgins,Bears,125.7393,0.0058,0.0321,0.2737,103.2685,3.2906,50000.0,216.1667,0.0001
+Dak Prescott,James Cook III,Bucky Irving,CeeDee Lamb,George Pickens,Elic Ayomanor,Gunnar Helm,Daniel Bellinger,Steelers,127.112,0.0052,0.0319,0.2856,100.3803,3.1545,50000.0,233.9667,0.0001
+Dak Prescott,James Cook III,D'Andre Swift,CeeDee Lamb,George Pickens,Elic Ayomanor,Greg Dulcich,Elijah Higgins,Steelers,125.9015,0.0053,0.0314,0.2755,96.8085,3.1612,49900.0,218.3667,0.0001
+Dak Prescott,James Cook III,Tony Pollard,CeeDee Lamb,George Pickens,Elic Ayomanor,Gunnar Helm,Jack Bech,Steelers,125.5276,0.0055,0.0306,0.2699,96.6746,3.2132,50000.0,220.0333,0.0001
+Dak Prescott,James Cook III,D'Andre Swift,CeeDee Lamb,George Pickens,Elic Ayomanor,Cade Otton,Elijah Higgins,Steelers,125.8558,0.0053,0.0309,0.276,96.637,3.1574,50000.0,216.2667,0.0001
+Dak Prescott,James Cook III,Bucky Irving,CeeDee Lamb,George Pickens,Elic Ayomanor,Greg Dulcich,Daniel Bellinger,Steelers,127.0292,0.0052,0.0303,0.2831,95.7288,3.1382,49900.0,236.0,0.0001
+Dak Prescott,James Cook III,Tony Pollard,CeeDee Lamb,George Pickens,Elic Ayomanor,Gunnar Helm,Evan Engram,Steelers,125.3626,0.0056,0.0304,0.2664,95.4786,3.2245,50000.0,217.4333,0.0
+Dak Prescott,James Cook III,Tony Pollard,CeeDee Lamb,George Pickens,Elic Ayomanor,Gunnar Helm,Elijah Higgins,Broncos,125.2495,0.0055,0.0307,0.2661,94.8205,3.1979,49900.0,211.4,0.0
+Dak Prescott,James Cook III,Bucky Irving,CeeDee Lamb,George Pickens,Elic Ayomanor,Cade Otton,Daniel Bellinger,Steelers,126.9835,0.005,0.0304,0.2838,94.2819,3.0889,50000.0,233.9,0.0001
+Dak Prescott,James Cook III,D'Andre Swift,CeeDee Lamb,George Pickens,Elic Ayomanor,Gunnar Helm,Daniel Bellinger,Steelers,125.433,0.0049,0.0316,0.2716,94.0132,3.0968,49900.0,215.7667,0.0
+Dak Prescott,James Cook III,Tony Pollard,CeeDee Lamb,George Pickens,Elic Ayomanor,Mark Andrews,Elijah Higgins,Steelers,125.6592,0.0052,0.0305,0.2702,93.0457,3.135,49800.0,219.4,0.0001
+Dak Prescott,James Cook III,D'Andre Swift,CeeDee Lamb,George Pickens,Elic Ayomanor,Greg Dulcich,Charlie Kolar,Steelers,125.5043,0.0052,0.0298,0.27,93.0382,3.149,50000.0,217.0333,0.0
+Dak Prescott,James Cook III,Bucky Irving,CeeDee Lamb,George Pickens,Elic Ayomanor,Mason Taylor,Elijah Higgins,Steelers,127.2287,0.0049,0.0298,0.2875,92.9479,3.0555,49900.0,234.9,0.0002
+Dak Prescott,James Cook III,Bucky Irving,CeeDee Lamb,George Pickens,Elic Ayomanor,Mason Taylor,Charlie Kolar,Steelers,126.8315,0.0051,0.0291,0.2801,90.9021,3.095,50000.0,233.5667,0.0001
+Dak Prescott,James Cook III,Tony Pollard,CeeDee Lamb,George Pickens,Elic Ayomanor,Gunnar Helm,Chris Bell,Steelers,125.0796,0.0052,0.0299,0.2642,90.6935,3.1449,50000.0,218.6333,0.0001
+Dak Prescott,James Cook III,Tony Pollard,CeeDee Lamb,George Pickens,Elic Ayomanor,Gunnar Helm,Kenyon Sadiq,Steelers,125.0326,0.0052,0.0297,0.2633,89.4073,3.127,49900.0,216.9667,0.0
+Dak Prescott,James Cook III,D'Andre Swift,CeeDee Lamb,George Pickens,Elic Ayomanor,Mason Taylor,Elijah Higgins,Steelers,125.5497,0.0048,0.0297,0.2708,89.0326,3.0556,49800.0,216.7,0.0001
