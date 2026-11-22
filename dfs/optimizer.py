@@ -2,7 +2,7 @@
 
 Lineup rules (Classic): QB, RB, RB, WR, WR, WR, TE, FLEX, DST, $50,000 cap.
 GPP rules enforced:
-  * QB + >= 2 of his own WR/TE, + >= 1 bring-back from the opponent
+  * QB + >= 2 of his own WR/TE, + >= 1 bring-back from the opponent, no RB from QB's team
   * FLEX must be WR or TE (no RB in FLEX)
   * no offensive player facing your DST
   * ownership leverage (projected ownership penalised; dupes penalised)
@@ -85,8 +85,9 @@ class LineupILP:
     """Binary ILP solved with HiGHS; objective is swapped between solves."""
 
     def __init__(self, pool, min_salary=48500, stack_n=2, bringback=1, no_rb_flex=True, no_opp_dst=True,
-                 max_per_team=None, qb_team_max=None, bringback_max=None):
-        """qb_team_max: max offensive players from the QB's team besides the QB.
+                 max_per_team=None, qb_team_max=None, bringback_max=None, no_qb_rb=True):
+        """no_qb_rb: no RB from the QB's own team.
+        qb_team_max: max offensive players from the QB's team besides the QB.
         bringback_max: max offensive players from the QB's opponent."""
         self.pool = pool
         n = self.n = len(pool)
@@ -118,6 +119,10 @@ class LineupILP:
             if bringback:
                 opps = np.where((T == O[q]) & np.isin(P, ["WR", "TE", "RB"]))[0]
                 row(np.r_[opps, q], np.r_[np.ones(len(opps)), -bringback], 0, inf)
+            if no_qb_rb:
+                rbs = np.where((T == T[q]) & (P == "RB"))[0]
+                # sum(own RBs) + 2 x_q <= 2
+                row(np.r_[rbs, q], np.r_[np.ones(len(rbs)), 2], -inf, 2)
             if qb_team_max is not None:
                 team_all = np.where((T == T[q]) & (P != "DST") & (np.arange(n) != q))[0]
                 # sum(team) <= qb_team_max + 8 * (1 - x_q)
@@ -161,7 +166,8 @@ def sample_field(pool, own, n=3000, n_opt=300, seed=11, log=print):
     sal = pool.Salary.values
     mean = pool["mean"].values
     o = own.values
-    ilp = LineupILP(pool, min_salary=49000, stack_n=0, bringback=0, no_rb_flex=False, no_opp_dst=False)
+    ilp = LineupILP(pool, min_salary=49000, stack_n=0, bringback=0, no_rb_flex=False, no_opp_dst=False,
+                    no_qb_rb=False)
     opt = []
     for _ in range(n_opt):
         obj = mean * rng.lognormal(0, 0.22, len(mean)) + 0.06 * o
@@ -202,8 +208,44 @@ def sample_field(pool, own, n=3000, n_opt=300, seed=11, log=print):
 # --------------------------------------------------------------------------- #
 # Main optimisation routine
 # --------------------------------------------------------------------------- #
-def optimize(pool, sims, own=None, n_candidates=400, top_n=20, contest_size=100000, field_n=3000,
-             own_penalty=0.10, seed=3, ilp_kwargs=None, log=print):
+def payout_table(n_entries, rake=0.15, paid_frac=0.22):
+    """Approximate DK GPP payout curve (top-heavy), in units of entry fee, indexed by rank-1."""
+    n_paid = max(int(n_entries * paid_frac), 1)
+    r = np.arange(1, n_paid + 1)
+    w = r ** -1.1
+    pool = n_entries * (1 - rake)
+    min_cash = 2.0
+    pay = min_cash + (pool - min_cash * n_paid) * w / w.sum()
+    out = np.zeros(n_entries)
+    out[:n_paid] = pay
+    return out
+
+
+def validate(pool, lu, rules):
+    """Return list of rule violations for a lineup (empty = valid)."""
+    g = pool.loc[list(lu)]
+    err = []
+    c = g.pos.value_counts()
+    if len(g) != 9: err.append("size")
+    if g.Salary.sum() > SALARY_CAP: err.append("salary")
+    if c.get("QB", 0) != 1 or c.get("DST", 0) != 1: err.append("qb/dst count")
+    if c.get("WR", 0) < 3 or c.get("TE", 0) < 1: err.append("wr/te count")
+    if rules.get("no_rb_flex", True) and c.get("RB", 0) != 2: err.append("RB in FLEX")
+    qb = g[g.pos == "QB"].iloc[0]
+    mates = g[(g.team == qb.team) & (g.pos != "QB") & (g.pos != "DST")]
+    opps = g[(g.team == qb.opp) & (g.pos != "DST")]
+    if (mates.pos.isin(["WR", "TE"])).sum() < rules.get("stack_n", 2): err.append("stack")
+    if len(opps) < rules.get("bringback", 1): err.append("bring-back")
+    if rules.get("no_qb_rb", True) and (mates.pos == "RB").any(): err.append("RB with own QB")
+    if rules.get("qb_team_max") is not None and len(mates) > rules["qb_team_max"]: err.append("qb team max")
+    if rules.get("bringback_max") is not None and len(opps) > rules["bringback_max"]: err.append("bring-back max")
+    dst = g[g.pos == "DST"].iloc[0]
+    if rules.get("no_opp_dst", True) and ((g.team == dst.opp) & (g.pos != "DST")).any(): err.append("vs own DST")
+    return err
+
+
+def optimize(pool, sims, own=None, n_candidates=600, top_n=20, contest_size=1500, field_n=3000,
+             own_penalty=0.03, seed=3, ilp_kwargs=None, log=print):
     rng = np.random.default_rng(seed)
     if own is None:
         own = estimate_ownership(pool)
@@ -213,17 +255,16 @@ def optimize(pool, sims, own=None, n_candidates=400, top_n=20, contest_size=1000
     S = sims.shape[1]
 
     cands = set()
-    base = ilp.solve(mean)
-    if base:
-        cands.add(base)
-    ceil = ilp.solve(pool.p85.values - own_penalty * pool.own.values)
-    if ceil:
-        cands.add(ceil)
+    for obj in (mean, pool.p85.values, pool.p95.values, mean - own_penalty * pool.own.values):
+        lu = ilp.solve(obj)
+        if lu:
+            cands.add(lu)
     log(f"generating {n_candidates} candidate lineups from simulated outcomes ...")
     for k in range(n_candidates):
         j = rng.integers(S)
-        # one simulated slate outcome, shrunk toward mean, with ownership leverage
-        obj = 0.5 * mean + 0.5 * sims[:, j] - own_penalty * pool.own.values * rng.uniform(0.5, 1.5)
+        lam = rng.uniform(0.3, 0.8)                         # weight on the simulated outcome
+        pen = own_penalty * rng.uniform(0, 2) if k % 2 else 0.0
+        obj = (1 - lam) * mean + lam * sims[:, j] - pen * pool.own.values
         lu = ilp.solve(obj)
         if lu:
             cands.add(lu)
@@ -235,12 +276,23 @@ def optimize(pool, sims, own=None, n_candidates=400, top_n=20, contest_size=1000
         X[r, list(lu)] = 1
     cand_scores = X @ sims                                     # [C, S]
     field = sample_field(pool, pool.own, n=field_n, log=log).astype(np.float32)
-    field_scores = field @ sims                                # [F, S]
-    q999 = np.quantile(field_scores, 0.999, axis=0)
-    q99 = np.quantile(field_scores, 0.99, axis=0)
-    q80 = np.quantile(field_scores, 0.80, axis=0)
-    fmax = field_scores.max(0)
+    field_scores = np.sort(field @ sims, axis=0)               # [F, S] ascending per sim
+    F = field_scores.shape[0]
 
+    # rank of each candidate within a contest of `contest_size` (field sample scaled up)
+    pay = payout_table(contest_size)
+    ev = np.zeros(len(cands))
+    top1 = np.zeros(len(cands)); top01 = np.zeros(len(cands)); cash = np.zeros(len(cands)); win = np.zeros(len(cands))
+    paid_n = int((pay > 0).sum())
+    for j in range(S):
+        beaten_by = F - np.searchsorted(field_scores[:, j], cand_scores[:, j], side="right")
+        frac = beaten_by / F
+        rank = np.minimum((frac * (contest_size - 1)).astype(int), contest_size - 1)
+        ev += pay[rank]
+        win += rank == 0
+        top01 += frac < 0.001
+        top1 += frac < 0.01
+        cash += rank < paid_n
     o = pool.own.values / 100.0
     dup = np.array([contest_size * np.prod(o[list(lu)]) for lu in cands])
     res = pd.DataFrame({
@@ -249,17 +301,27 @@ def optimize(pool, sims, own=None, n_candidates=400, top_n=20, contest_size=1000
         "median": np.median(cand_scores, 1),
         "p90": np.percentile(cand_scores, 90, 1),
         "p99": np.percentile(cand_scores, 99, 1),
-        "top0.1%": (cand_scores > q999).mean(1),
-        "top1%": (cand_scores > q99).mean(1),
-        "cash%": (cand_scores > q80).mean(1),
-        "beat_field_max%": (cand_scores > fmax).mean(1),
+        "win%": win / S,
+        "top0.1%": top01 / S,
+        "top1%": top1 / S,
+        "cash%": cash / S,
         "salary": X @ pool.Salary.values,
         "own_sum": X @ pool.own.values,
         "exp_dupes": dup,
     })
-    # GPP score: top-0.1% rate (dominant) + top-1% rate, split by expected duplicates
-    res["gpp_score"] = (res["top0.1%"] * 10 + res["top1%"]) / (1 + res.exp_dupes)
-    res = res.sort_values(["gpp_score", "p99"], ascending=False).reset_index(drop=True)
+    # expected ROI, payouts split with expected duplicates
+    res["roi%"] = 100 * ((ev / S) / (1 + dup) - 1)
+    res = res.sort_values(["roi%", "p99"], ascending=False).reset_index(drop=True)
+    rules = dict(ilp_kwargs or {})
+    bad = [(i, validate(pool, lu, rules)) for i, lu in enumerate(res.lineup)]
+    bad = [b for b in bad if b[1]]
+    if bad:
+        log(f"WARNING: {len(bad)} lineups violate rules, removed: {bad[:5]}")
+        res = res.drop(index=[b[0] for b in bad]).reset_index(drop=True)
+    else:
+        log(f"validator: all {len(res)} lineups satisfy every rule")
+    # also report the pure max-projection lineup
+    res.attrs["max_mean_lineup"] = res.sort_values("mean", ascending=False).iloc[0]
     return pool, res.head(top_n), res
 
 

@@ -28,9 +28,9 @@ def main():
     ap.add_argument("--season", type=int, default=2026)
     ap.add_argument("--week", type=int, required=True)
     ap.add_argument("--sims", type=int, default=20000)
-    ap.add_argument("--candidates", type=int, default=500)
+    ap.add_argument("--candidates", type=int, default=600)
     ap.add_argument("--top", type=int, default=20)
-    ap.add_argument("--contest-size", type=int, default=100000)
+    ap.add_argument("--contest-size", type=int, default=1500)
     ap.add_argument("--min-salary", type=int, default=48500)
     ap.add_argument("--exclude", default="", help="comma-separated player names to exclude")
     ap.add_argument("--ownership", help="optional CSV with Name,Ownership (percent)")
@@ -39,6 +39,7 @@ def main():
     ap.add_argument("--stack-n", type=int, default=2, help="min WR/TE stacked with QB")
     ap.add_argument("--qb-team-max", type=int, default=None, help="max players (any pos) from QB's team besides QB")
     ap.add_argument("--bringback-max", type=int, default=None, help="max players from QB's opponent")
+    ap.add_argument("--allow-qb-rb", action="store_true", help="allow an RB from the QB's team")
     ap.add_argument("--out", default=os.path.join(os.path.dirname(__file__), "output"))
     ap.add_argument("--seed", type=int, default=7)
     a = ap.parse_args()
@@ -97,7 +98,8 @@ def main():
     pool, top, allres = O.optimize(pool, psims, own=own, n_candidates=a.candidates, top_n=a.top,
                                    contest_size=a.contest_size,
                                    ilp_kwargs=dict(min_salary=a.min_salary, stack_n=a.stack_n,
-                                                   qb_team_max=a.qb_team_max, bringback_max=a.bringback_max))
+                                                   qb_team_max=a.qb_team_max, bringback_max=a.bringback_max,
+                                                   no_qb_rb=not a.allow_qb_rb))
 
     proj = pool[["Name", "ID", "pos", "team", "opp", "Salary", "mean", "median", "p85", "p95", "sd", "own", "status"]]
     proj = proj.assign(value=proj["mean"] / (proj.Salary / 1000)).sort_values("mean", ascending=False)
@@ -119,8 +121,12 @@ def main():
     print("\n================ BEST GPP LINEUP ================")
     print(O.lineup_table(pool, best.lineup).round(2).to_string(index=False))
     print(f"Salary ${int(best.salary):,} | mean {best['mean']:.1f} | p90 {best.p90:.1f} | p99 {best.p99:.1f} | "
-          f"top-0.1% {best['top0.1%']*100:.2f}% | top-1% {best['top1%']*100:.2f}% | cash {best['cash%']*100:.1f}% | "
+          f"ROI {best['roi%']:.0f}% | win {best['win%']*100:.2f}% | top-1% {best['top1%']*100:.2f}% | cash {best['cash%']*100:.1f}% | "
           f"own-sum {best.own_sum:.0f}% | exp dupes {best.exp_dupes:.2f}")
+    mm = allres.attrs["max_mean_lineup"]
+    print("\nHighest-projected valid lineup (for reference):")
+    print(O.lineup_table(pool, mm.lineup).round(2).to_string(index=False))
+    print(f"mean {mm['mean']:.1f} | ROI {mm['roi%']:.0f}% | top-1% {mm['top1%']*100:.2f}% | cash {mm['cash%']*100:.1f}%")
     print("\nTop lineups:")
     print(top.drop(columns="lineup").round(3).to_string())
     print(f"\nFiles written to {a.out}")
