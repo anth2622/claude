@@ -1,3 +1,4 @@
 dfs/data/cache/
 dfs/output/
 __pycache__/
+dfs/results/*/sims.npy

@@ -39,6 +39,10 @@ def main():
     ap.add_argument("--stack-n", type=int, default=2, help="min WR/TE stacked with QB")
     ap.add_argument("--qb-team-max", type=int, default=None, help="max players (any pos) from QB's team besides QB")
     ap.add_argument("--bringback-max", type=int, default=None, help="max players from QB's opponent")
+    ap.add_argument("--no-te-flex", action="store_true", help="FLEX must be a WR")
+    ap.add_argument("--save-sims", action="store_true", help="save pool + sims to out/sims.npz for diagnostics")
+    ap.add_argument("--final-chunks", type=int, default=5, help="blocks of fresh sims for the final ranking")
+    ap.add_argument("--final-n", type=int, default=40, help="lineups carried into the final ranking")
     ap.add_argument("--allow-qb-rb", action="store_true", help="allow an RB from the QB's team")
     ap.add_argument("--out", default=os.path.join(os.path.dirname(__file__), "output"))
     ap.add_argument("--seed", type=int, default=7)
@@ -76,7 +80,15 @@ def main():
         sims[i, rng.random(sims.shape[1]) < a.q_miss] = 0.0
     players["mean"] = sims.mean(1)
 
+    # independent simulation set for out-of-sample lineup ranking
+    players2, sims2, _ = M.simulate(lines, profiles, defense, sh, n_sims=a.sims, seed=a.seed + 1000)
+    rng2 = np.random.default_rng(a.seed + 1001)
+    for i in np.where(players2.status.values == "Q")[0]:
+        sims2[i, rng2.random(sims2.shape[1]) < a.q_miss] = 0.0
     pool, psims, unmatched = O.merge_pool(dk, players, sims, exclude=excl)
+    esims = sims2[pool.row.values]
+    for i in np.where((pool.dk_status.values == "Q") & (pool.status.values != "Q"))[0]:
+        esims[i, rng2.random(esims.shape[1]) < a.q_miss] = 0.0
     if len(unmatched):
         top_unmatched = unmatched.sort_values("Salary", ascending=False).head(15)
         print(f"\n{len(unmatched)} DK players not in usage data (no recent snaps / inactive) — e.g.:")
@@ -95,11 +107,56 @@ def main():
     if own is None:
         own = O.estimate_ownership(pool)
 
-    pool, top, allres = O.optimize(pool, psims, own=own, n_candidates=a.candidates, top_n=a.top,
+    pool, top, allres = O.optimize(pool, psims, own=own, eval_sims=esims, n_candidates=a.candidates, top_n=a.top,
                                    contest_size=a.contest_size,
                                    ilp_kwargs=dict(min_salary=a.min_salary, stack_n=a.stack_n,
                                                    qb_team_max=a.qb_team_max, bringback_max=a.bringback_max,
-                                                   no_qb_rb=not a.allow_qb_rb))
+                                                   no_qb_rb=not a.allow_qb_rb, no_te_flex=a.no_te_flex))
+
+    if a.save_sims:
+        pool.to_pickle(os.path.join(a.out, "pool.pkl"))
+        np.save(os.path.join(a.out, "sims.npy"), psims)
+    # ---- final ranking on large, fresh simulation blocks (removes selection bias / noise) ----
+    rules = dict(min_salary=a.min_salary, stack_n=a.stack_n, qb_team_max=a.qb_team_max,
+                 bringback_max=a.bringback_max, no_qb_rb=not a.allow_qb_rb, no_te_flex=a.no_te_flex)
+    if a.final_chunks > 0:
+        fin = list(allres.lineup[:a.final_n])
+        mm_lu = allres.attrs["max_mean_lineup"].lineup
+        if mm_lu not in fin:
+            fin.append(mm_lu)
+        for lu in O.single_swaps(pool, fin[0], rules):
+            if lu not in fin:
+                fin.append(lu)
+        field = allres.attrs["field"]
+        acc = None
+        for c in range(a.final_chunks):
+            print(f"final ranking: block {c + 1}/{a.final_chunks} ({len(fin)} lineups) ...", flush=True)
+            _, sc, _ = M.simulate(lines, profiles, defense, sh, n_sims=a.sims, seed=a.seed + 5000 + 17 * c)
+            rc = np.random.default_rng(a.seed + 7000 + c)
+            sc = sc[pool.row.values]
+            qmask = (pool.status.values == "Q") | (pool.dk_status.values == "Q")
+            for i in np.where(qmask)[0]:
+                sc[i, rc.random(sc.shape[1]) < a.q_miss] = 0.0
+            r = O.score_chunk(pool, fin, sc, field, a.contest_size)
+            acc = r if acc is None else {k: acc[k] + r[k] for k in acc}
+        N = acc["n"]
+        evm = acc["ev"] / N
+        se = np.sqrt(np.maximum(acc["ev2"] / N - evm ** 2, 0) / N)
+        X = np.zeros((len(fin), len(pool)))
+        for i, lu in enumerate(fin):
+            X[i, list(lu)] = 1
+        dup = np.array([a.contest_size * np.prod(pool.own.values[list(lu)] / 100) for lu in fin])
+        allres = pd.DataFrame({
+            "lineup": fin, "mean": acc["sum"] / N, "win%": acc["win"] / N, "top1%": acc["top1"] / N,
+            "cash%": acc["cash"] / N, "roi%": 100 * (evm / (1 + dup) - 1), "roi_se": 100 * se,
+            "salary": X @ pool.Salary.values, "own_sum": X @ pool.own.values, "exp_dupes": dup,
+        }).sort_values("roi%", ascending=False).reset_index(drop=True)
+        top = allres.head(a.top)
+        allres.attrs["max_mean_lineup"] = allres[allres.lineup == mm_lu].iloc[0]
+        fr = allres.copy()
+        fr["players"] = [" | ".join(pool.Name.values[list(lu)]) for lu in fr.lineup]
+        fr.drop(columns="lineup").round(4).to_csv(os.path.join(a.out, "final_ranking.csv"), index=False)
+        print(f"final ranking on {N:,} fresh sims; ROI standard error ~ +/-{allres.roi_se.iloc[0]:.0f} pts")
 
     proj = pool[["Name", "ID", "pos", "team", "opp", "Salary", "mean", "median", "p85", "p95", "sd", "own", "status"]]
     proj = proj.assign(value=proj["mean"] / (proj.Salary / 1000)).sort_values("mean", ascending=False)
@@ -120,7 +177,7 @@ def main():
     best = top.iloc[0]
     print("\n================ BEST GPP LINEUP ================")
     print(O.lineup_table(pool, best.lineup).round(2).to_string(index=False))
-    print(f"Salary ${int(best.salary):,} | mean {best['mean']:.1f} | p90 {best.p90:.1f} | p99 {best.p99:.1f} | "
+    print(f"Salary ${int(best.salary):,} | mean {best['mean']:.1f} | "
           f"ROI {best['roi%']:.0f}% | win {best['win%']*100:.2f}% | top-1% {best['top1%']*100:.2f}% | cash {best['cash%']*100:.1f}% | "
           f"own-sum {best.own_sum:.0f}% | exp dupes {best.exp_dupes:.2f}")
     mm = allres.attrs["max_mean_lineup"]
