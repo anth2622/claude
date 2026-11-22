@@ -36,6 +36,9 @@ def main():
     ap.add_argument("--ownership", help="optional CSV with Name,Ownership (percent)")
     ap.add_argument("--q-miss", type=float, default=0.12, help="chance a Questionable player sits")
     ap.add_argument("--lines", default="", help='line overrides "AWAY@HOME=homeSpread/total,..." e.g. "MIA@BUF=-16.5/46.5"')
+    ap.add_argument("--stack-n", type=int, default=2, help="min WR/TE stacked with QB")
+    ap.add_argument("--qb-team-max", type=int, default=None, help="max players (any pos) from QB's team besides QB")
+    ap.add_argument("--bringback-max", type=int, default=None, help="max players from QB's opponent")
     ap.add_argument("--out", default=os.path.join(os.path.dirname(__file__), "output"))
     ap.add_argument("--seed", type=int, default=7)
     a = ap.parse_args()
@@ -93,7 +96,8 @@ def main():
 
     pool, top, allres = O.optimize(pool, psims, own=own, n_candidates=a.candidates, top_n=a.top,
                                    contest_size=a.contest_size,
-                                   ilp_kwargs=dict(min_salary=a.min_salary))
+                                   ilp_kwargs=dict(min_salary=a.min_salary, stack_n=a.stack_n,
+                                                   qb_team_max=a.qb_team_max, bringback_max=a.bringback_max))
 
     proj = pool[["Name", "ID", "pos", "team", "opp", "Salary", "mean", "median", "p85", "p95", "sd", "own", "status"]]
     proj = proj.assign(value=proj["mean"] / (proj.Salary / 1000)).sort_values("mean", ascending=False)

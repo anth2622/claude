@@ -387,7 +387,10 @@ def _simulate(lines, profiles, defense, spread_hist, n_sims, seed, env):
         td_lambda = LEAGUE_TD_PER_PT * P
         tds = rng.poisson(td_lambda)
         ptf = np.clip(prof.pass_td_frac * d.get("ptd_frac", 1.0) ** 0.5 - 0.006 * (-r.spread), 0.35, 0.85)
-        ptd = rng.binomial(tds, ptf)
+        # game-to-game pass/rush TD mix varies a lot (keeps QB-RB correlation realistic, ~0.2)
+        k_mix = 3.0
+        ptf_sim = rng.beta(ptf * k_mix, (1 - ptf) * k_mix, S)
+        ptd = rng.binomial(tds, ptf_sim)
         rtd = tds - ptd
         posk = pl.pos.values
         w_rec = (targets + 0.6 * tgt_sh[:, None] * 30) * np.array([POS_PRIOR[p]["rz_tgt"] for p in posk])[:, None] * pl.rec_td_skill.values[:, None] ** 0.5

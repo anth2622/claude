@@ -85,7 +85,9 @@ class LineupILP:
     """Binary ILP solved with HiGHS; objective is swapped between solves."""
 
     def __init__(self, pool, min_salary=48500, stack_n=2, bringback=1, no_rb_flex=True, no_opp_dst=True,
-                 max_per_team=None):
+                 max_per_team=None, qb_team_max=None, bringback_max=None):
+        """qb_team_max: max offensive players from the QB's team besides the QB.
+        bringback_max: max offensive players from the QB's opponent."""
         self.pool = pool
         n = self.n = len(pool)
         h = self.h = highspy.Highs()
@@ -116,6 +118,13 @@ class LineupILP:
             if bringback:
                 opps = np.where((T == O[q]) & np.isin(P, ["WR", "TE", "RB"]))[0]
                 row(np.r_[opps, q], np.r_[np.ones(len(opps)), -bringback], 0, inf)
+            if qb_team_max is not None:
+                team_all = np.where((T == T[q]) & (P != "DST") & (np.arange(n) != q))[0]
+                # sum(team) <= qb_team_max + 8 * (1 - x_q)
+                row(np.r_[team_all, q], np.r_[np.ones(len(team_all)), 8 - qb_team_max], -inf, 8)
+            if bringback_max is not None:
+                opp_all = np.where((T == O[q]) & (P != "DST"))[0]
+                row(np.r_[opp_all, q], np.r_[np.ones(len(opp_all)), 8 - bringback_max], -inf, 8)
         if no_opp_dst:
             for d in by("DST"):
                 offs = np.where((P != "DST") & (T == O[d]))[0]
