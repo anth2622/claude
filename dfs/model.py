@@ -121,8 +121,25 @@ def _wavg(x, w):
     return float(np.sum(np.asarray(x, float) * w) / max(w.sum(), 1e-9))
 
 
-def build_profiles(stats, inj, week, decay=0.85, out_statuses=("Out", "Doubtful"), extra_out=()):
-    """Build team + player usage profiles using all games before `week`."""
+DK_INACTIVE = ("OUT", "O", "D", "IR", "PUP", "NA", "SUS")
+
+
+def build_profiles(stats, inj, week, decay=0.85, out_statuses=("Out", "Doubtful"), extra_out=(), dk=None):
+    """Build team + player usage profiles using all games before `week`.
+
+    If a DK salary frame is given, its Status column (OUT/D/IR...) marks players inactive,
+    DK-active players are kept even after a long absence, and the starting QB is the
+    highest-salaried active QB on DK.
+    """
+    dk_out, dk_active, dk_qb = set(), set(), {}
+    if dk is not None:
+        for r in dk.itertuples():
+            k = (r.team, norm_name(r.Name))
+            (dk_out if r.dk_status in DK_INACTIVE else dk_active).add(k)
+        q = dk[(dk.pos == "QB") & ~dk.dk_status.isin(DK_INACTIVE)].sort_values("Salary", ascending=False)
+        for t, gq in q.groupby("team"):
+            top = gq[gq.Salary == gq.Salary.iloc[0]]
+            dk_qb[t] = list(top.Name)
     s = stats[(stats.week < week) & stats.player_id.notna()].copy()
     s["w"] = decay ** (s.week.max() - s.week)
     s["dropbacks"] = s.attempts.fillna(0) + s.sacks_suffered.fillna(0)
@@ -201,13 +218,23 @@ def build_profiles(stats, inj, week, decay=0.85, out_statuses=("Out", "Doubtful"
             continue
         team_last = int(tgt.week.max())
         # drop players not seen recently (released / long-term IR) unless they played in 2 of team's last 4
-        pdf = pdf[pdf.last_wk >= team_last - 4]
+        pdf = pdf[(pdf.last_wk >= team_last - 4) | np.array([(team, k) in dk_active for k in pdf.key], dtype=bool)]
         pdf["status"] = [
-            "OUT" if ((team, k) in out_set or k in extra_out) else ("Q" if (team, k) in q_set else "")
+            "OUT" if ((team, k) in out_set or k in extra_out or (team, k) in dk_out)
+            else ("Q" if (team, k) in q_set else "")
             for k in pdf.key
         ]
         act = pdf[pdf.status != "OUT"].copy()
         # starting QB: highest recency-weighted attempts among active QBs
+        if team in dk_qb:
+            cands = [norm_name(n) for n in dk_qb[team]]
+            act = act[(act.pos != "QB") | act.key.isin(cands)]
+            if not (act.pos == "QB").any():   # DK starter has no stats with this team: generic QB
+                nm = dk_qb[team][0]
+                act = pd.concat([act, pd.DataFrame([dict(
+                    player_id=f"gen_{team}", name=nm, key=norm_name(nm), pos="QB", team=team, tgt_share=0.0,
+                    car_share=0.07, ypt=6.0, cr=0.6, ypc=4.5, rec_td_skill=1.0, car_td_skill=1.0, att_w=1.0,
+                    int_rate=0.026, fum_rate=0.006, last_wk=team_last, games=0, status="")])], ignore_index=True)
         qbs = act[act.pos == "QB"].sort_values("att_w", ascending=False)
         qb = qbs.name.iloc[0] if len(qbs) else None
         int_rate = qbs.int_rate.iloc[0] if len(qbs) else LEAGUE_INT_RATE

@@ -23,7 +23,7 @@ SLOTS = ["QB", "RB", "RB", "WR", "WR", "WR", "TE", "FLEX", "DST"]
 # DK salary file
 # --------------------------------------------------------------------------- #
 def read_dk(path):
-    dk = pd.read_csv(path)
+    dk = pd.read_csv(path, encoding="utf-8-sig")
     dk.columns = [c.strip() for c in dk.columns]
     gi = dk["Game Info"].astype(str).str.split(" ").str[0]
     dk["game"] = gi
@@ -32,6 +32,7 @@ def read_dk(path):
     home = gi.str.split("@").str[1]
     dk["opp"] = np.where(dk.team == away, home, away)
     dk["pos"] = dk.Position.str.strip()
+    dk["dk_status"] = dk["Status"].fillna("").astype(str).str.upper() if "Status" in dk else ""
     dk["key"] = np.where(dk.pos == "DST", "dst_" + dk.team, dk.Name.map(norm_name))
     return dk
 
@@ -52,7 +53,8 @@ def merge_pool(dk, players, sims, exclude=(), min_mean=1.0):
     m = m[m.row.notna()].copy()
     m["row"] = m.row.astype(int)
     excl = {norm_name(x) for x in exclude}
-    m = m[~m.key.isin(excl) & (m.status != "OUT") & (m["mean"] >= min_mean)]
+    m = m[~m.key.isin(excl) & (m.status != "OUT") & ~m.dk_status.isin(["OUT", "O", "D", "IR", "PUP", "NA", "SUS"])
+          & (m["mean"] >= min_mean)]
     m = m.reset_index(drop=True)
     return m, sims[m.row.values], unmatched
 

@@ -35,6 +35,7 @@ def main():
     ap.add_argument("--exclude", default="", help="comma-separated player names to exclude")
     ap.add_argument("--ownership", help="optional CSV with Name,Ownership (percent)")
     ap.add_argument("--q-miss", type=float, default=0.12, help="chance a Questionable player sits")
+    ap.add_argument("--lines", default="", help='line overrides "AWAY@HOME=homeSpread/total,..." e.g. "MIA@BUF=-16.5/46.5"')
     ap.add_argument("--out", default=os.path.join(os.path.dirname(__file__), "output"))
     ap.add_argument("--seed", type=int, default=7)
     a = ap.parse_args()
@@ -46,6 +47,13 @@ def main():
 
     dk = O.read_dk(a.dk)
     stats, games, inj = M.load_data()
+    for ov in filter(None, [x.strip() for x in a.lines.split(",")]):
+        gid, v = ov.split("=")
+        aw, hm = gid.split("@")
+        sp, tot = map(float, v.split("/"))
+        sel = (games.season == a.season) & (games.week == a.week) & (games.away_team == aw) & (games.home_team == hm)
+        games.loc[sel, "spread_line"] = -sp      # nflverse: positive = home favoured
+        games.loc[sel, "total_line"] = tot
     lines = M.slate_lines(games, a.season, a.week, teams=set(dk.team))
     missing = set(dk.team) - set(lines.index)
     if missing:
@@ -53,7 +61,7 @@ def main():
     print("Vegas implied totals:")
     print(lines[["opp", "spread", "total", "implied"]].sort_values("implied", ascending=False).round(2).to_string())
 
-    profiles = M.build_profiles(stats, inj, a.week, extra_out=excl)
+    profiles = M.build_profiles(stats, inj, a.week, extra_out=excl, dk=dk)
     defense = M.build_defense(stats, a.week)
     sh = M.avg_spread_history(games, a.season, a.week)
     players, sims, _ = M.simulate(lines, profiles, defense, sh, n_sims=a.sims, seed=a.seed)
@@ -69,6 +77,11 @@ def main():
         top_unmatched = unmatched.sort_values("Salary", ascending=False).head(15)
         print(f"\n{len(unmatched)} DK players not in usage data (no recent snaps / inactive) — e.g.:")
         print(top_unmatched[["Name", "pos", "team", "Salary"]].to_string(index=False))
+
+    # DK-listed Questionable players not already flagged
+    for i in np.where((pool.dk_status.values == "Q") & (pool.status.values != "Q"))[0]:
+        psims[i, rng.random(psims.shape[1]) < a.q_miss] = 0.0
+    pool["mean"] = psims.mean(1)
 
     own = None
     if a.ownership:
