@@ -111,6 +111,7 @@ def main():
     ap.add_argument("--contest-size", type=int, default=1500)
     ap.add_argument("--exclude", default="")
     ap.add_argument("--top", type=int, default=20)
+    ap.add_argument("--max-team", type=int, default=None, help="max players from one team")
     ap.add_argument("--q-play", type=float, default=0.6, help="chance a Day-To-Day/Q player plays")
     ap.add_argument("--out", default=os.path.join(os.path.dirname(__file__), "output"))
     a = ap.parse_args()
@@ -136,11 +137,12 @@ def main():
     S1, S2 = sims[pool.row.values], sims_eval[pool.row.values]
     mean = pool["mean"].values
 
-    ilp = NBAILP(pool)
+    ilp_field = NBAILP(pool)
+    ilp = NBAILP(pool, max_per_team=a.max_team)
     # simulated field: noisy-projection optimisers (what most entrants play)
     field = []
     for _ in range(400):
-        r = ilp.solve(mean * rng.lognormal(0, 0.22, len(mean)))
+        r = ilp_field.solve(mean * rng.lognormal(0, 0.22, len(mean)))
         if r:
             v = np.zeros(len(pool), np.float32); v[list(r[0])] = 1; field.append(v)
     field = np.array(field * 5)
