@@ -30,7 +30,8 @@ def read_dk(path):
     dk = pd.read_csv(path, encoding="utf-8-sig")
     dk.columns = [c.strip() for c in dk.columns]
     dk["team"] = dk.TeamAbbrev.str.strip()
-    dk["key"] = dk.Name.map(M.norm_name)
+    alias = {"alexandre sarr": "alex sarr"}
+    dk["key"] = dk.Name.map(M.norm_name).replace(alias)
     dk["elig"] = dk["Roster Position"].str.split("/")
     dk["dk_status"] = dk["Status"].fillna("").astype(str).str.upper() if "Status" in dk else ""
     return dk
@@ -110,6 +111,7 @@ def main():
     ap.add_argument("--contest-size", type=int, default=1500)
     ap.add_argument("--exclude", default="")
     ap.add_argument("--top", type=int, default=20)
+    ap.add_argument("--q-play", type=float, default=0.6, help="chance a Day-To-Day/Q player plays")
     ap.add_argument("--out", default=os.path.join(os.path.dirname(__file__), "output"))
     a = ap.parse_args()
     os.makedirs(a.out, exist_ok=True)
@@ -120,7 +122,7 @@ def main():
     dk = read_dk(a.dk)
     excl = [x.strip() for x in a.exclude.split(",") if x.strip()]
     out_dk = list(dk[dk.dk_status.isin(["OUT", "O", "D"])].Name)
-    pr, lines = M.build_projection(data, out=excl + out_dk)
+    pr, lines = M.build_projection(data, out=excl + out_dk, questionable_play=a.q_play)
     pr, sims = M.simulate(pr, lines, a.sims, seed=7)
     _, sims_eval = M.simulate(pr, lines, a.sims * 3, seed=1007)
 

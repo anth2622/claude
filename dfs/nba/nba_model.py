@@ -96,6 +96,7 @@ def build_projection(data, out=(), questionable_play=0.6, decay=0.88):
     lines = lines_from(data)
     status = {(dk_team(p["team"]), norm_name(p["name"])): p["injury"] for p in data["players"]}
     out = {norm_name(x) for x in out}
+    team_dates = {t: sorted(g.date.unique()) for t, g in logs.groupby("team")}
     recs = []
     for pid, g in logs[logs["min"] > 0].sort_values("date").groupby("pid"):
         g = g.tail(25)
@@ -110,39 +111,69 @@ def build_projection(data, out=(), questionable_play=0.6, decay=0.88):
         rates = {}
         tot_min_w = (mins * w).sum()
         for s in STATS:
-            rates[s] = ((g[s].values * w).sum() + 120 * pri[s]) / (tot_min_w + 120)
+            rates[s] = ((g[s].values * w).sum() + 30 * pri[s]) / (tot_min_w + 30)
         team = g.team.iloc[-1]
+        last10 = team_dates[team][-10:]
+        appear = g.date.isin(last10).sum() / max(len(last10), 1)
         key = norm_name(g.name.iloc[-1])
         st = status.get((team, key), "")
         recs.append(dict(pid=pid, name=g.name.iloc[-1], key=key, team=team, pos=g.pos.iloc[-1], pg=pg,
                          games=n, last_min=mins[-1], exp_min=exp_min, status=st,
-                         days_since=(logs.date.max() - g.date.iloc[-1]).days, **{f"r_{s}": v for s, v in rates.items()}))
+                         days_since=(logs.date.max() - g.date.iloc[-1]).days, appear=appear, **{f"r_{s}": v for s, v in rates.items()}))
     pr = pd.DataFrame(recs)
     pr = pr[pr.team.isin(lines.index)]
     pr.loc[pr.key.isin(out) | (pr.status == "Out"), "status"] = "Out"
     # players who have not played in 12+ days and aren't listed are likely inactive/injured
     pr = pr[(pr.days_since <= 12) | (pr.status == "Day-To-Day")]
-    # active minutes rescaled to 240 per team (Day-To-Day counted at `questionable_play` weight)
-    pr["play_p"] = np.where(pr.status == "Out", 0.0, np.where(pr.status == "Day-To-Day", questionable_play, 1.0))
-    for t, g in pr.groupby("team"):
-        m = g.exp_min * g.play_p
-        scale = 240 / max(m.sum(), 1)
-        # redistribute mostly to players already in the rotation, capped at 40 minutes
-        adj = np.minimum(g.exp_min * (1 + (scale - 1) * np.clip(g.exp_min / 30, 0.3, 1.3)), 40)
-        adj = adj * 240 / max((adj * g.play_p).sum(), 1)
-        pr.loc[g.index, "proj_min"] = np.minimum(adj, 40)
-    # Vegas scaling
+    # play probability: Out = 0, Day-To-Day = questionable_play; fringe players by appearance rate
+    pr["dtd"] = pr.status == "Day-To-Day"
+    pr["play_p"] = np.where(pr.status == "Out", 0.0, np.where(pr.dtd, questionable_play, 1.0))
+    pr["base_p"] = np.where(pr.status == "Out", 0.0, np.where(pr.exp_min >= 20, 1.0, np.clip(pr.appear, 0.15, 1.0)))
     team_avg = logs.groupby(["team", "date"]).team_score.first().astype(float).groupby(level=0).mean()
+    pr = pr.reset_index(drop=True)
+    pr["proj_min"] = 0.0
+    pr["f_pts"] = 1.0
+    pr["f_other"] = 1.0
+    scen = {}
     for t, g in pr.groupby("team"):
+        idx = g.index.values
+        dtd = [i for i in idx if pr.at[i, "dtd"]]
         r = lines.loc[t]
-        act = g.play_p > 0
-        raw_pts = (g.r_pts * g.proj_min * g.play_p).sum()
-        f_pts = np.clip(r.implied / max(raw_pts, 1), 0.8, 1.25)
         avg_t, avg_o = team_avg.get(t, 115), team_avg.get(r.opp, 115)
         pace = np.clip(r.total / (avg_t + avg_o), 0.9, 1.1)
-        pr.loc[g.index, "f_pts"] = f_pts
-        pr.loc[g.index, "f_other"] = pace ** 0.6
+        combos = {}
+        for mask in range(2 ** len(dtd)):
+            plays = {d: bool(mask >> k & 1) for k, d in enumerate(dtd)}
+            pp = np.array([pr.at[i, "base_p"] * (plays[i] if i in plays else 1.0) for i in idx])
+            pm = _allocate(g.exp_min.values.copy(), pp)
+            raw = (g.r_pts.values * pm * pp).sum()
+            f_pts = float(np.clip(r.implied / max(raw, 1), 0.8, 1.25))
+            combos[mask] = (pm, pp, f_pts)
+        scen[t] = dict(idx=idx, dtd=dtd, combos=combos)
+        # expected values for reporting (weighted over scenarios)
+        w = {m: np.prod([questionable_play if (m >> k & 1) else 1 - questionable_play for k in range(len(dtd))])
+             for m in combos}
+        pr.loc[idx, "proj_min"] = sum(w[m] * combos[m][0] * (combos[m][1] > 0) for m in combos) / \
+            np.maximum(sum(w[m] * (combos[m][1] > 0) for m in combos), 1e-9)
+        pr.loc[idx, "f_pts"] = sum(w[m] * combos[m][2] for m in combos)
+        pr.loc[idx, "f_other"] = pace ** 0.6
+    lines.attrs["scen"] = scen
+    lines.attrs["q_play"] = questionable_play
     return pr.reset_index(drop=True), lines
+
+
+def _allocate(pm, pp):
+    """Rescale expected team minutes to 240 (trim fringe players first, give vacated minutes to rotation)."""
+    for _ in range(25):
+        tot = (pm * pp).sum()
+        if abs(tot - 240) < 0.5:
+            break
+        if tot > 240:
+            wgt = np.clip((38 - pm) / 20, 0.05, 1.0) * (pp > 0)
+        else:
+            wgt = np.clip(pm / 30, 0.2, 1.3) * (pp > 0)
+        pm = np.clip(pm + (240 - tot) * wgt / max((wgt * pp).sum(), 1e-9), 0, 42)
+    return pm
 
 
 def simulate(pr, lines, n_sims=20000, seed=7):
@@ -158,21 +189,35 @@ def simulate(pr, lines, n_sims=20000, seed=7):
         pace[h] = pace[a] = p
     team_eff = {t: np.exp(rng.normal(0, 0.07, S)) for t in lines.index}
 
+    scen, qp = lines.attrs["scen"], lines.attrs["q_play"]
+    mean_min = np.zeros((len(pr), S), np.float32)
+    play_ok = np.zeros((len(pr), S), bool)
+    fpts = np.ones((len(pr), S), np.float32)
+    for t, sc in scen.items():
+        dmask = np.zeros(S, int)
+        for k, d in enumerate(sc["dtd"]):
+            dmask |= (rng.random(S) < qp).astype(int) << k
+        for m, (pm, pp, f) in sc["combos"].items():
+            sel = dmask == m
+            for j, i in enumerate(sc["idx"]):
+                mean_min[i, sel] = pm[j]
+                play_ok[i, sel] = rng.random(sel.sum()) < pp[j]
+                fpts[i, sel] = f
     out = np.zeros((len(pr), S), np.float32)
-    comp = {}
     for i, r in pr.iterrows():
-        plays = rng.random(S) < r.play_p
+        plays = play_ok[i]
         blow = np.abs(margin[r.team])
-        starter = r.proj_min >= 26
+        starter = r.exp_min >= 26
         # blowouts: starters lose up to ~25% of minutes, bench gains
         bfac = np.where(blow > 15, 1 - np.clip((blow - 15) / 40, 0, 0.28), 1.0) if starter else \
             np.where(blow > 15, 1 + np.clip((blow - 15) / 30, 0, 0.45), 1.0)
-        mins = np.clip(rng.normal(r.proj_min, 3.5 + 0.06 * r.proj_min, S) * bfac, 0, 48) * plays
+        mm = mean_min[i]
+        mins = np.clip(rng.normal(mm, 3.5 + 0.06 * mm, S) * bfac, 0, 48) * plays
         game_f = pace[r.team] * team_eff[r.team]
         pnoise = np.exp(rng.normal(0, 0.18, S) - 0.0162)        # player-specific shooting/role night
         lam = {}
         for s in STATS:
-            f = r.f_pts if s in ("pts", "tpm") else r.f_other
+            f = fpts[i] if s in ("pts", "tpm") else r.f_other
             g_ = game_f if s in ("pts", "tpm", "ast") else pace[r.team]
             pn = pnoise if s in ("pts", "tpm", "ast", "tov") else np.exp(rng.normal(0, 0.12, S) - 0.0072)
             lam[s] = r[f"r_{s}"] * mins * f * g_ * pn
