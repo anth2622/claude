@@ -1,0 +1,61 @@
+mean,p90,win%,top1%,cash%,roi%,roi_se,players
+254.8563,299.75,0.008,0.0295,0.4522,164.3548,6.0519,Cade Cunningham | Jamal Murray | Ausar Thompson | Christian Braun | Paul Reed | Neemias Queta | John Collins | Bilal Coulibaly
+240.9933,290.0,0.01,0.0303,0.3058,146.3564,6.7128,Nikola Jokic | Jamal Murray | Christian Braun | PJ Washington | Neemias Queta | Cameron Johnson | Sam Hauser | Baylor Scheierman
+250.9536,296.75,0.0068,0.0263,0.3872,128.0332,5.6173,Cade Cunningham | Jamal Murray | Ausar Thompson | Desmond Bane | Christian Braun | Neemias Queta | Sam Hauser | Bilal Coulibaly
+246.0978,292.75,0.0064,0.0264,0.3475,113.7198,5.4777,Nikola Jokic | Jamal Murray | Daniss Jenkins | Christian Braun | Neemias Queta | John Collins | Baylor Scheierman | Bilal Coulibaly
+243.6811,291.0,0.0076,0.0246,0.3096,111.2249,5.8917,Cade Cunningham | Franz Wagner | Ausar Thompson | Desmond Bane | Daniss Jenkins | Daniel Gafford | Zaccharie Risacher | Trevon Brazile
+245.9584,292.5,0.0067,0.0239,0.3315,105.8675,5.5538,Cade Cunningham | Franz Wagner | Ausar Thompson | Anthony Black | John Collins | Daniel Gafford | Tristan da Silva | Caleb Martin
+246.1722,292.0,0.0065,0.0218,0.3322,98.5523,5.4447,Cade Cunningham | Franz Wagner | Ausar Thompson | Daniss Jenkins | PJ Washington | Neemias Queta | Walter Clayton Jr. | Bilal Coulibaly
+247.22,293.25,0.0054,0.0234,0.3564,97.6262,5.0116,Nikola Jokic | Jamal Murray | Ausar Thompson | Christian Braun | Neemias Queta | John Collins | Bilal Coulibaly | Jordan Walsh
+245.9366,290.75,0.0061,0.0219,0.3313,96.6946,5.3007,Nikola Jokic | Cade Cunningham | Desmond Bane | Neemias Queta | Cameron Johnson | John Collins | Sam Hauser | Bilal Coulibaly
+250.3234,294.5,0.0055,0.0195,0.3764,95.9248,5.0175,Franz Wagner | Jamal Murray | Ausar Thompson | Desmond Bane | Paul Reed | Cameron Johnson | John Collins | Bilal Coulibaly
+236.167,281.5,0.0082,0.0234,0.2316,94.5782,6.1168,Jayson Tatum | Franz Wagner | Ausar Thompson | Desmond Bane | Naji Marshall | Daniel Gafford | Caleb Martin | Walter Clayton Jr.
+247.2012,292.0,0.0051,0.0211,0.3528,89.9422,4.8792,Nikola Jokic | Jamal Murray | Ausar Thompson | Christian Braun | John Collins | Caleb Martin | Sam Hauser | Bilal Coulibaly
+250.2835,293.75,0.0048,0.0191,0.3788,89.383,4.7254,Cade Cunningham | Jamal Murray | Ausar Thompson | Daniss Jenkins | Neemias Queta | John Collins | Daniel Gafford | Caleb Martin
+244.6918,291.25,0.0057,0.0206,0.3242,87.1085,5.1234,Cade Cunningham | Ausar Thompson | Anthony Black | Desmond Bane | Daniss Jenkins | Kevin Huerter | Neemias Queta | Zaccharie Risacher
+249.8552,294.75,0.0044,0.0186,0.3732,83.2494,4.5616,Franz Wagner | Jamal Murray | Ausar Thompson | Desmond Bane | Paul Reed | Neemias Queta | Caleb Martin | Bilal Coulibaly
+238.3313,283.75,0.0062,0.0237,0.2666,82.2927,5.3733,Jayson Tatum | Jamal Murray | Christian Braun | PJ Washington | Alexandre Sarr | Aaron Gordon | Cameron Johnson | John Collins
+249.677,294.0,0.0047,0.0177,0.3707,82.2469,4.658,Franz Wagner | Jamal Murray | Ausar Thompson | Desmond Bane | Kevin Huerter | Neemias Queta | John Collins | Bilal Coulibaly
+243.7958,288.5,0.0056,0.0232,0.2983,82.1064,5.1058,Cade Cunningham | Franz Wagner | Anthony Black | Kyshawn George | Neemias Queta | Daniel Gafford | Caleb Martin | Zaccharie Risacher
+249.3134,293.25,0.0045,0.0193,0.3643,81.9855,4.593,Cade Cunningham | Ausar Thompson | Anthony Black | Christian Braun | Paul Reed | PJ Washington | Neemias Queta | John Collins
+250.3608,294.75,0.0044,0.0175,0.3738,80.9706,4.5234,Cade Cunningham | Franz Wagner | Ausar Thompson | Christian Braun | Neemias Queta | Cameron Johnson | John Collins | Walter Clayton Jr.
+245.7002,291.0,0.0051,0.0178,0.3184,72.8799,4.8638,Cade Cunningham | Ausar Thompson | Anthony Black | Daniss Jenkins | Christian Braun | PJ Washington | Neemias Queta | Tristan da Silva
+245.535,289.75,0.005,0.0187,0.3129,71.2961,4.8121,Cade Cunningham | Franz Wagner | Ausar Thompson | Christian Braun | Neemias Queta | Naji Marshall | Daniel Gafford | DeMar DeRozan
+248.44,293.5,0.0038,0.0181,0.3595,70.062,4.2543,Jamal Murray | Ausar Thompson | Anthony Black | Desmond Bane | Christian Braun | PJ Washington | Neemias Queta | Cameron Johnson
+241.4317,287.0,0.0055,0.0186,0.2784,69.5974,5.0548,Cade Cunningham | Franz Wagner | Desmond Bane | Wendell Carter Jr. | Paul Reed | John Collins | Caleb Martin | Zaccharie Risacher
+239.951,286.75,0.0059,0.0182,0.2682,69.0819,5.2072,Cade Cunningham | Franz Wagner | Anthony Black | Wendell Carter Jr. | Paul Reed | John Collins | Tristan da Silva | Walter Clayton Jr.
+237.2054,281.5,0.0061,0.0197,0.2408,66.9195,5.3049,Jayson Tatum | Franz Wagner | Desmond Bane | Daniss Jenkins | Paul Reed | Daniel Gafford | Zaccharie Risacher | Walter Clayton Jr.
+245.5048,290.25,0.0045,0.0173,0.3169,66.6072,4.596,Cade Cunningham | Franz Wagner | Ausar Thompson | Desmond Bane | Aaron Gordon | John Collins | Zaccharie Risacher | Walter Clayton Jr.
+243.2479,290.0,0.0045,0.0179,0.302,63.114,4.578,Cade Cunningham | Franz Wagner | Anthony Black | Desmond Bane | Paul Reed | Neemias Queta | Caleb Martin | Trevon Brazile
+245.899,289.0,0.0044,0.0162,0.3179,61.9114,4.5029,Franz Wagner | Ausar Thompson | Kyshawn George | Desmond Bane | Daniss Jenkins | Alexandre Sarr | Neemias Queta | John Collins
+242.7566,286.0,0.0048,0.0173,0.283,59.388,4.7294,Cade Cunningham | Jamal Murray | Kyrie Irving | Aaron Gordon | Neemias Queta | John Collins | Daniel Gafford | Sam Hauser
+247.917,292.0,0.0034,0.0147,0.3398,54.859,4.0297,Franz Wagner | Jamal Murray | Ausar Thompson | Christian Braun | Paul Reed | Cameron Johnson | John Collins | DeMar DeRozan
+238.179,283.0,0.0052,0.0161,0.2537,54.4669,4.8786,Nikola Jokic | Jamal Murray | AJ Dybantsa | Christian Braun | Cameron Johnson | Daniel Gafford | Morez Johnson | Bilal Coulibaly
+243.5781,289.0,0.0041,0.0162,0.2979,54.2305,4.3931,Franz Wagner | Ausar Thompson | Anthony Black | Daniss Jenkins | Christian Braun | Paul Reed | Kevin Huerter | Daniel Gafford
+248.0527,291.0,0.003,0.0146,0.3447,51.7347,3.7893,Franz Wagner | Ausar Thompson | Anthony Black | Kyshawn George | Christian Braun | Paul Reed | Neemias Queta | Zaccharie Risacher
+241.3517,286.25,0.0044,0.0155,0.2754,49.5997,4.5171,Cade Cunningham | Ausar Thompson | Anthony Black | Kyshawn George | Paul Reed | Kevin Huerter | Neemias Queta | Tristan da Silva
+239.3245,281.25,0.005,0.0159,0.2495,49.5427,4.7827,Jamal Murray | Kyrie Irving | AJ Dybantsa | Kyshawn George | PJ Washington | Neemias Queta | John Collins | Daniel Gafford
+239.9286,285.75,0.0044,0.0169,0.2644,49.1994,4.5486,Cade Cunningham | Franz Wagner | Desmond Bane | Paul Reed | Kevin Huerter | John Collins | Daniel Gafford | Tristan da Silva
+246.2371,291.0,0.0034,0.0145,0.3176,48.2019,4.0219,Franz Wagner | Jamal Murray | Ausar Thompson | Anthony Black | Paul Reed | Neemias Queta | Zaccharie Risacher | Tre Johnson
+235.0098,279.0,0.0051,0.0165,0.2283,47.7106,4.8405,Jamal Murray | Paul George | AJ Dybantsa | Kyshawn George | Christian Braun | Alexandre Sarr | Cameron Johnson | Zaccharie Risacher
+243.6049,288.75,0.0041,0.0135,0.2932,46.7167,4.3364,Franz Wagner | Jamal Murray | Ausar Thompson | Christian Braun | PJ Washington | Aaron Gordon | Neemias Queta | Hugo Gonzalez
+245.8788,288.5,0.0034,0.0142,0.3151,46.6309,3.9942,Cade Cunningham | Jamal Murray | Ausar Thompson | PJ Washington | Aaron Gordon | Neemias Queta | Daniel Gafford | Caleb Martin
+232.952,276.25,0.0055,0.0169,0.2045,46.3044,5.0471,Jayson Tatum | Franz Wagner | Trae Young | Daniss Jenkins | John Collins | Daniel Gafford | Caleb Martin | Walter Clayton Jr.
+243.2807,287.25,0.0039,0.0146,0.285,45.7018,4.2929,Cade Cunningham | Franz Wagner | Jamal Murray | Neemias Queta | Tristan da Silva | Caleb Martin | Zaccharie Risacher | Walter Clayton Jr.
+239.6007,284.5,0.0037,0.0166,0.2717,44.2428,4.2146,Nikola Jokic | Jamal Murray | Payton Pritchard | Christian Braun | Cameron Johnson | John Collins | Caleb Martin | Bilal Coulibaly
+246.9813,288.5,0.0031,0.0129,0.3253,44.1459,3.8444,Jamal Murray | Ausar Thompson | AJ Dybantsa | Kyshawn George | Daniss Jenkins | Christian Braun | Neemias Queta | Zaccharie Risacher
+247.0368,289.25,0.0028,0.0138,0.3285,43.5285,3.6975,Cade Cunningham | Ausar Thompson | AJ Dybantsa | Anthony Black | Christian Braun | Aaron Gordon | Neemias Queta | Daniel Gafford
+239.7228,281.25,0.0041,0.0162,0.2541,43.0955,4.3942,Anthony Davis | Jamal Murray | AJ Dybantsa | Anthony Black | Kyshawn George | John Collins | Zaccharie Risacher | Bilal Coulibaly
+243.7148,286.75,0.0034,0.014,0.2912,41.1895,4.0322,Cade Cunningham | Jamal Murray | Anthony Black | Desmond Bane | Neemias Queta | Naji Marshall | Daniel Gafford | Sam Hauser
+239.6279,286.5,0.0039,0.0153,0.2619,40.0635,4.2759,Cade Cunningham | Franz Wagner | Anthony Black | Desmond Bane | Paul Reed | Neemias Queta | Sam Hauser | Hugo Gonzalez
+244.7534,289.0,0.0033,0.0127,0.3004,38.7225,3.9502,Cade Cunningham | Jamal Murray | Ausar Thompson | Desmond Bane | Christian Braun | Aaron Gordon | Javonte Green | Bilal Coulibaly
+237.0501,281.25,0.0043,0.0158,0.2361,38.7132,4.4838,Cooper Flagg | Jamal Murray | Kyrie Irving | Christian Braun | Neemias Queta | John Collins | Zaccharie Risacher | Trevon Brazile
+243.6546,286.5,0.0035,0.0132,0.2831,37.7203,4.0429,Cade Cunningham | Jamal Murray | Christian Braun | Paul Reed | PJ Washington | Kevin Huerter | John Collins | Daniel Gafford
+244.3833,287.75,0.0032,0.0124,0.2958,36.129,3.8773,Franz Wagner | Jamal Murray | Anthony Black | Desmond Bane | Aaron Gordon | Neemias Queta | Naji Marshall | Bilal Coulibaly
+244.6932,285.75,0.0029,0.0134,0.3006,35.6496,3.7305,Jayson Tatum | Jamal Murray | Ausar Thompson | Desmond Bane | Neemias Queta | John Collins | Caleb Martin | Sam Hauser
+243.7878,287.25,0.0031,0.0125,0.294,35.3031,3.8434,Cade Cunningham | Franz Wagner | Anthony Black | Christian Braun | Paul Reed | Alexandre Sarr | Zaccharie Risacher | Bilal Coulibaly
+240.3108,283.25,0.0033,0.0153,0.267,35.2364,3.9768,Nikola Jokic | Jamal Murray | AJ Dybantsa | Cameron Johnson | John Collins | Tristan da Silva | Caleb Martin | Zaccharie Risacher
+245.074,288.25,0.0025,0.0129,0.303,31.8735,3.5136,Cade Cunningham | Jamal Murray | Desmond Bane | Christian Braun | PJ Washington | Neemias Queta | Daniel Gafford | Bilal Coulibaly
+244.1754,287.25,0.0029,0.0129,0.2893,31.4799,3.7351,Cade Cunningham | Jamal Murray | Daniss Jenkins | Wendell Carter Jr. | Christian Braun | Cameron Johnson | John Collins | Zaccharie Risacher
+237.9978,279.25,0.0035,0.0136,0.2408,27.5802,4.053,Jayson Tatum | Jamal Murray | Paul George | Christian Braun | Neemias Queta | Caleb Martin | Zaccharie Risacher | Sam Hauser
+243.6697,286.0,0.0026,0.0115,0.2792,22.9043,3.5151,Jamal Murray | Ausar Thompson | Kyshawn George | Desmond Bane | Wendell Carter Jr. | Christian Braun | Paul Reed | Zaccharie Risacher
