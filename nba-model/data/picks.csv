@@ -3,3 +3,4 @@ day,id,matchup,market,side,line,odds,prob,edge_pts,ev,stake,result,profit,close_
 20261116,401909996,MEM @ WSH,total,over,230.5,-110,0.5342,6.4,0.0197,1.0,W,0.909,231.5,1.0,
 20261118,401910017,UTAH @ LAL,total,over,227.5,-114,0.5395,7.2,0.0128,1.0,L,-1.0,229.5,2.0,
 20261118,401910016,GS @ DAL,total,over,222.5,-110,0.5268,4.9,0.0058,1.0,L,-1.0,223.5,1.0,
+20261128,401910049,OKC @ MIL,total,under,228.5,-110,0.5265,6.9,0.0052,1.0,pending,,,,

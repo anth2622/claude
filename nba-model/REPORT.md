@@ -13,6 +13,7 @@ CLV = points of closing-line value (positive means we beat the close). It is the
 
 | Date | Game | Pick | Odds | Prob | Result | Units | Close | CLV |
 |---|---|---|---|---|---|---|---|---|
+| 2026-11-28 | OKC @ MIL | UNDER 228.5 | -110 | 52.6% | pending |  |  |  |
 | 2026-11-18 | GS @ DAL | OVER 222.5 | -110 | 52.7% | L | -1.0 | 223.5 | 1.0 |
 | 2026-11-18 | UTAH @ LAL | OVER 227.5 | -114 | 53.9% | L | -1.0 | 229.5 | 2.0 |
 | 2026-11-16 | MEM @ WSH | OVER 230.5 | -110 | 53.4% | W | 0.909 | 231.5 | 1.0 |
